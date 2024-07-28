@@ -3,63 +3,30 @@
 version: '3.7'
 
 services:
-  proxy:
-    image: traefik:v2.4.2
-    command:
-      # - "--log.level=DEBUG" # comment th
-      - "--api=true"
-      - "--api.dashboard=true"
-      - "--api.insecure=true" # Don't do that in production
-      - "--providers.docker"
-      - "--entrypoints.web.address=:80"
-    labels: {}
-    volumes:
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
-        read_only: true
-    ports:
-      - target: 80
-        published: 80
-        protocol: tcp
-        mode: host
-      - target: 8080
-        published: 8080
-        protocol: tcp
-        mode: host
-
 
   website:
     build: ./website
-    # image: website
-    # command:
-    #   - "-usersAPI"
-    #   - "http://users:4000/api/users/"
-    command: air
-    labels:
-      # Enable public access
-      - "traefik.http.routers.website.rule=PathPrefix(`/`)"
-      - "traefik.http.services.website.loadbalancer.server.port=8000"
-    volumes: # remove this line when in prod
-      - ./website:/opt/web  # remove this line when in prod
-
+    ports:
+      - "8000:8000"
+    environment:
+      - USERS_API_URL=http://users:4000/api/users/
 
   users:
     build: ./users
-    command: air
-    # image: ghcr.io/mmorejon/cinema-users:v2.2.2
-    # command:
-      # - "-mongoURI"
-      # - "mongodb://db:27017/"
-    #   - "-enableCredentials"
-    #   - "true"
-    # environment:
-    #   MONGODB_USERNAME: "demo"
-    #   MONGODB_PASSWORD: "e3LBVTPdlzxYbxt9"
-    labels:
-      - "traefik.http.routers.users.rule=PathPrefix(`/api/users/`)"
-      - "traefik.http.services.users.loadbalancer.server.port=4000"
-    volumes: # remove this line when in prod
-      - ./users:/opt/app # remove this line when in prod
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
 
-  
+  db:
+    image: mysql:latest
+    restart: always
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: logistiktani
+    volumes:
+      - logistik_tani_db:/var/lib/mysql
+
+volumes:
+  logistik_tani_db:
