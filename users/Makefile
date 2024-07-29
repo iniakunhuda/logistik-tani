@@ -2,7 +2,7 @@ run: build
 	@./temp/logistik-user
 
 build:
-	@go build -o temp/logistik-user ./cmd/app
+	@go build -o temp/logistik-user .
 
 
 # Define MySQL connection parameters
