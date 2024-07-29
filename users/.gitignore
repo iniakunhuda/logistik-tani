@@ -5,6 +5,8 @@
 *.a
 *.so
 
+.env
+
 # Folders
 _obj
 _test
