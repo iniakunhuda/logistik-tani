@@ -14,6 +14,7 @@ import (
 	"github.com/iniakunhuda/logistik-tani/users/repository"
 	"github.com/iniakunhuda/logistik-tani/users/router"
 	"github.com/iniakunhuda/logistik-tani/users/service"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -25,6 +26,10 @@ type Application struct {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
 	// // Define command-line flags
 	serverAddr := flag.String("serverAddr", "", "HTTP server network address")
@@ -42,13 +47,6 @@ func main() {
 		errLog.Fatal(err)
 	}
 
-	// app := Application{
-	// 	infoLog:  infoLog,
-	// 	errorLog: errLog,
-	// 	users:    &model.UserModel{DB: db},
-	// }
-
-	// // Initialize a new http.Server struct.
 	serverURI := fmt.Sprintf("%s:%d", *serverAddr, *serverPort)
 
 	validate := validator.New()

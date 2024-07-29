@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"os"
 	"strconv"
 	"time"
 
@@ -192,7 +193,12 @@ func (t *UserServiceImpl) Login(email string, password string) (response.UserRes
 		return response.UserResponse{}, errors.New("password not match")
 	}
 
-	jwt := util.NewJWT("secret")
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return response.UserResponse{}, errors.New("JWT_SECRET is not set")
+	}
+
+	jwt := util.NewJWT(secret)
 	token, err := jwt.CreateToken(strconv.Itoa(int(userData.ID)), userData.Email, 5)
 	if err != nil {
 		return response.UserResponse{}, err
