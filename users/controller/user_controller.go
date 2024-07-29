@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -79,7 +78,6 @@ func (controller *UserController) Create(w http.ResponseWriter, r *http.Request)
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
 	}
-
 
 	util.FormatResponseSuccess(w, http.StatusCreated, nil, nil)
 }
