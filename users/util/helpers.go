@@ -2,6 +2,7 @@ package util
 
 import (
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -22,4 +23,8 @@ func HashPassword(password string) (string, error) {
 func VerifyPassword(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func GetTimeNow() string {
+	return time.Now().Format("2006-01-02 15:04:05")
 }

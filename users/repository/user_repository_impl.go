@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/iniakunhuda/logistik-tani/users/model"
-	"github.com/iniakunhuda/logistik-tani/users/request"
+	// "github.com/iniakunhuda/logistik-tani/users/request"
 	"gorm.io/gorm"
 )
 
@@ -55,10 +55,7 @@ func (t *UserRepositoryImpl) Save(user model.User) error {
 }
 
 func (t *UserRepositoryImpl) Update(user model.User) error {
-	var updateUser = request.UpdateUserRequest{
-		Name: user.Name,
-	}
-	result := t.Db.Model(&user).Updates(updateUser)
+	result := t.Db.Model(&user).Updates(user)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -72,4 +69,12 @@ func (t *UserRepositoryImpl) GetAllByQuery(user model.User) (users []model.User,
 		return nil, result.Error
 	}
 	return userList, nil
+}
+
+func (t *UserRepositoryImpl) GetOneByQuery(user model.User) (userData model.User, err error) {
+	result := t.Db.Where(&user).First(&userData)
+	if result.Error != nil {
+		return model.User{}, result.Error
+	}
+	return userData, nil
 }

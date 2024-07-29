@@ -1,6 +1,10 @@
 package service
 
 import (
+	"errors"
+	"strconv"
+	"time"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/iniakunhuda/logistik-tani/users/model"
 	"github.com/iniakunhuda/logistik-tani/users/repository"
@@ -29,21 +33,23 @@ func (t *UserServiceImpl) Create(user request.CreateUserRequest) error {
 	}
 
 	userModel := model.User{
-		Name:        user.Name,
-		Username:    user.Email,
-		Email:       user.Email,
-		Password:    hashPassword,
-		Alamat:      user.Alamat,
-		Telp:        user.Telp,
-		Role:        user.Role,
-		Saldo:       user.Saldo,
-		LastLogin:   "",
-		AlamatKebun: user.AlamatKebun,
-		TotalObat:   user.TotalObat,
-		TotalPupuk:  user.TotalPupuk,
-		TotalBibit:  user.TotalBibit,
-		TotalTebu:   user.TotalTebu,
-		LuasLahan:   user.LuasLahan,
+		Name:         user.Name,
+		Username:     user.Email,
+		Email:        user.Email,
+		Password:     hashPassword,
+		Alamat:       user.Alamat,
+		Telp:         user.Telp,
+		Role:         user.Role,
+		Saldo:        user.Saldo,
+		LastLogin:    "",
+		AlamatKebun:  user.AlamatKebun,
+		TotalObat:    user.TotalObat,
+		TotalPupuk:   user.TotalPupuk,
+		TotalBibit:   user.TotalBibit,
+		TotalTebu:    user.TotalTebu,
+		LuasLahan:    user.LuasLahan,
+		Token:        nil,
+		TokenExpired: nil,
 	}
 	err = t.UserRepository.Save(userModel)
 
@@ -86,10 +92,10 @@ func (t *UserServiceImpl) FindById(userId int) (response.UserResponse, error) {
 		return response.UserResponse{}, err
 	}
 
-	tagResponse := response.UserResponse{
+	formatResponse := response.UserResponse{
 		User: *userData,
 	}
-	return tagResponse, nil
+	return formatResponse, nil
 }
 
 func (t *UserServiceImpl) Update(userId int, user request.UpdateUserRequest) error {
@@ -97,7 +103,62 @@ func (t *UserServiceImpl) Update(userId int, user request.UpdateUserRequest) err
 	if err != nil {
 		return err
 	}
-	userData.Name = user.Name
+
+	// update all field
+
+	if user.Name != "" {
+		userData.Name = user.Name
+	}
+	if user.Email != "" {
+		userData.Email = user.Email
+	}
+	if user.Alamat != "" {
+		userData.Alamat = user.Alamat
+	}
+	if user.Telp != "" {
+		userData.Telp = user.Telp
+	}
+	if user.Role != "" {
+		userData.Role = user.Role
+	}
+	if user.Saldo != 0 {
+		userData.Saldo = user.Saldo
+	}
+
+	if user.LastLogin != "" {
+		userData.LastLogin = user.LastLogin
+	}
+	if user.AlamatKebun != "" {
+		userData.AlamatKebun = user.AlamatKebun
+	}
+	if user.TotalObat != 0 {
+		userData.TotalObat = user.TotalObat
+	}
+	if user.TotalPupuk != 0 {
+		userData.TotalPupuk = user.TotalPupuk
+	}
+	if user.TotalBibit != 0 {
+		userData.TotalBibit = user.TotalBibit
+	}
+	if user.TotalTebu != 0 {
+		userData.TotalTebu = user.TotalTebu
+	}
+	if user.LuasLahan != 0 {
+		userData.LuasLahan = user.LuasLahan
+	}
+
+	if user.Token != nil {
+		userData.Token = user.Token
+	}
+
+	if user.TokenExpired != nil {
+		tokenExpired, err := time.Parse(time.RFC3339, *user.TokenExpired)
+		if err != nil {
+			return err
+		}
+		userData.TokenExpired = &tokenExpired
+	}
+
 	t.UserRepository.Update(*userData)
 
 	return nil
@@ -118,4 +179,38 @@ func (t *UserServiceImpl) FindByRole(role string) ([]response.UserResponse, erro
 	}
 
 	return users, nil
+}
+
+func (t *UserServiceImpl) Login(email string, password string) (response.UserResponse, error) {
+	userData, err := t.UserRepository.GetOneByQuery(model.User{Email: email})
+	if err != nil {
+		return response.UserResponse{}, err
+	}
+
+	checkPassword := util.VerifyPassword(password, userData.Password)
+	if !checkPassword {
+		return response.UserResponse{}, errors.New("password not match")
+	}
+
+	jwt := util.NewJWT("secret")
+	token, err := jwt.CreateToken(strconv.Itoa(int(userData.ID)), userData.Email, 5)
+	if err != nil {
+		return response.UserResponse{}, err
+	}
+
+	userData.Token = &token
+	tokenExpired := time.Now().AddDate(0, 1, 0)
+
+	userData.TokenExpired = &tokenExpired
+	userData.LastLogin = util.GetTimeNow()
+
+	err = t.UserRepository.Update(userData)
+	if err != nil {
+		return response.UserResponse{}, err
+	}
+
+	formatResponse := response.UserResponse{
+		User: userData,
+	}
+	return formatResponse, nil
 }

@@ -55,8 +55,9 @@ func main() {
 	userRepository := repository.NewUserRepositoryImpl(db)
 	userService := service.NewUserServiceImpl(userRepository, validate)
 	userController := controller.NewUserController(userService)
+	authController := controller.NewAuthController(userService)
 
-	routes := router.NewRouter(userController)
+	routes := router.NewRouter(userController, authController)
 	srv := &http.Server{
 		Addr:         serverURI,
 		ErrorLog:     errLog,

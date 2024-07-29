@@ -5,7 +5,7 @@ import (
 	"github.com/iniakunhuda/logistik-tani/users/controller"
 )
 
-func NewRouter(userController *controller.UserController) *mux.Router {
+func NewRouter(userController *controller.UserController, authController *controller.AuthController) *mux.Router {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/api/users/", userController.FindAll).Methods("GET")
@@ -13,6 +13,8 @@ func NewRouter(userController *controller.UserController) *mux.Router {
 	r.HandleFunc("/api/users/", userController.Create).Methods("POST")
 	r.HandleFunc("/api/users/{id}", userController.Update).Methods("PUT")
 	r.HandleFunc("/api/users/{id}", userController.Delete).Methods("DELETE")
+
+	r.HandleFunc("/api/users/login/", authController.Login).Methods("POST")
 
 	return r
 }

@@ -9,4 +9,5 @@ type UserRepository interface {
 	FindById(userId int) (*model.User, error)
 	FindAll() (users []model.User, err error)
 	GetAllByQuery(user model.User) (users []model.User, err error)
+	GetOneByQuery(user model.User) (userData model.User, err error)
 }

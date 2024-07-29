@@ -15,4 +15,7 @@ type UpdateUserRequest struct {
 	TotalBibit  uint   `json:"total_bibit"`
 	TotalTebu   uint   `json:"total_tebu"`
 	LuasLahan   uint   `json:"luas_lahan"`
+
+	Token        *string `json:"token"`
+	TokenExpired *string `json:"token_expired"`
 }

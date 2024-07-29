@@ -23,6 +23,9 @@ type User struct {
 	TotalTebu   uint   `gorm:"default:0" json:"total_tebu"`
 	LuasLahan   uint   `gorm:"default:0" json:"luas_lahan"`
 
+	Token        *string    `gorm:"type:text;null" json:"token"`
+	TokenExpired *time.Time `gorm:"null" json:"token_expired"`
+
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
