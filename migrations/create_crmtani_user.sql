@@ -1,4 +1,4 @@
-DROP DATABASE IF EXISTS crmtani_user;
+-- DROP DATABASE IF EXISTS crmtani_user;
 
 CREATE DATABASE IF NOT EXISTS crmtani_user;
 USE crmtani_user;
