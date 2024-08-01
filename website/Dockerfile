@@ -1,62 +1,21 @@
-# # base image
-# FROM golang:1.22.2-alpine AS builder
-# # create appuser.
-# RUN adduser -D -g '' elf
-# # create workspace
-# WORKDIR /opt/web/
-# COPY go.mod go.sum ./
-# # fetch dependancies
-# RUN go mod download && \
-#     go mod verify
-# # copy the source code as the last step
-# COPY . .
-# # build binary
-# RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -a -installsuffix cgo -o /go/bin/logistik-web ./cmd/web
-
-
-# # build a small image
-# FROM alpine:3.17.3
-# LABEL language="golang"
-# LABEL org.opencontainers.image.source https://github.com/iniakunhuda/logistik-tani
-# # import the user and group files from the builder
-# COPY --from=builder /etc/passwd /etc/passwd
-# # create workspace
-# WORKDIR /opt/web/
-# # copy the static executable
-# COPY --from=builder --chown=elf:1000 /go/bin/logistik-web logistik-web
-# # copy static files
-# COPY ./ui ui
-# # use a non-root user
-# USER elf
-# # run app
-# ENTRYPOINT ["./logistik-web"]
-
-
-###
-# Development Only
-###
-# base image
-FROM golang:1.22.2-alpine
-
-# Install necessary build tools
-RUN apk add --no-cache git
-
-# create appuser
+# Use the official Golang image to create a build artifact.
+FROM golang:1.22.2-alpine AS build
 RUN adduser -D -g '' elf
-
-# After creating the elf user and before setting the WORKDIR
-RUN go install github.com/air-verse/air@latest
-
-# create workspace
-WORKDIR /opt/web/
-
-# Use go mod download as a separate step to cache dependencies
+WORKDIR /opt/web
 COPY go.mod go.sum ./
-RUN go mod download
+RUN go mod download && \
+    go mod verify
+COPY . .
+RUN go build -o /opt/web/logistik-web ./cmd/web
 
-# Set the user
+# Start a new stage from scratch using a lightweight alpine image
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+RUN adduser -D -g '' elf
+WORKDIR /opt/web/
+COPY --from=build /opt/web/logistik-web .
+RUN chown elf:elf logistik-web
+COPY ./ui ui
 USER elf
-
-# Run the application
-# CMD ["go", "run", "./cmd/web"]
-CMD ["air", "-c", ".air.toml"]
+EXPOSE 8000
+CMD ["./logistik-web"]
