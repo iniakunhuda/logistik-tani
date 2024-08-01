@@ -15,6 +15,7 @@ func NewRouter(userController *controller.UserController, authController *contro
 	r.HandleFunc("/api/users/{id}", userController.Delete).Methods("DELETE")
 
 	r.HandleFunc("/api/users/login/", authController.Login).Methods("POST")
+	r.HandleFunc("/api/users/profile/", authController.Profile).Methods("GET")
 
 	return r
 }

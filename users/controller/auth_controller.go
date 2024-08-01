@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -39,6 +40,23 @@ func (controller *AuthController) Login(w http.ResponseWriter, r *http.Request) 
 	}
 
 	user, err := controller.userService.Login(userRequest.Email, userRequest.Password)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, user, nil)
+}
+
+func (controller *AuthController) Profile(w http.ResponseWriter, r *http.Request) {
+	// read authorization in header
+	authorization := r.Header.Get("Authorization")
+	if authorization == "" {
+		util.FormatResponseError(w, http.StatusUnauthorized, errors.New("missing authorization header"))
+		return
+	}
+
+	user, err := controller.userService.Profile(authorization)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return

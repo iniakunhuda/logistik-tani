@@ -14,4 +14,5 @@ type UserService interface {
 	FindByRole(role string) ([]response.UserResponse, error)
 
 	Login(email string, password string) (response.UserResponse, error)
+	Profile(token string) (*response.UserResponse, error)
 }
