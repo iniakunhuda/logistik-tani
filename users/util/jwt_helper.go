@@ -19,9 +19,10 @@ func NewJWT(secretKey string) *JWT {
 
 func (j *JWT) CreateToken(userID string, email string, expirationTime time.Duration) (string, error) {
 	claims := jwt.MapClaims{
-		"userID": userID,
-		"email":  email,
-		"exp":    time.Now().Add(expirationTime * 24).Unix(),
+		"iss":     "user-login",
+		"user_id": userID,
+		"email":   email,
+		"exp":     time.Now().Add(expirationTime).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -35,11 +36,8 @@ func (j *JWT) CreateToken(userID string, email string, expirationTime time.Durat
 }
 
 func (j *JWT) VerifyToken(tokenString string) (string, error) {
+	tokenString = tokenString[len("Bearer "):]
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("invalid token signing method")
-		}
-
 		return j.secretKey, nil
 	})
 
@@ -47,12 +45,16 @@ func (j *JWT) VerifyToken(tokenString string) (string, error) {
 		return "", err
 	}
 
+	if !token.Valid {
+		return "", errors.New("invalid token")
+	}
+
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
 		return "", errors.New("invalid token")
 	}
 
-	userID, ok := claims["userID"].(string)
+	userID, ok := claims["user_id"].(string)
 	if !ok {
 		return "", errors.New("invalid token")
 	}

@@ -199,15 +199,17 @@ func (t *UserServiceImpl) Login(email string, password string) (response.UserRes
 	}
 
 	jwt := util.NewJWT(secret)
-	token, err := jwt.CreateToken(strconv.Itoa(int(userData.ID)), userData.Email, 5)
+	tokenExpired := time.Duration(720) * time.Hour
+
+	token, err := jwt.CreateToken(strconv.Itoa(int(userData.ID)), userData.Email, tokenExpired)
 	if err != nil {
 		return response.UserResponse{}, err
 	}
 
+	tokenExpiredTime := time.Now().AddDate(0, 0, 30)
+	userData.TokenExpired = &tokenExpiredTime
 	userData.Token = &token
-	tokenExpired := time.Now().AddDate(0, 1, 0)
 
-	userData.TokenExpired = &tokenExpired
 	userData.LastLogin = util.GetTimeNow()
 
 	err = t.UserRepository.Update(userData)
@@ -218,5 +220,30 @@ func (t *UserServiceImpl) Login(email string, password string) (response.UserRes
 	formatResponse := response.UserResponse{
 		User: userData,
 	}
+	return formatResponse, nil
+}
+
+func (t *UserServiceImpl) Profile(token string) (*response.UserResponse, error) {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return nil, errors.New("JWT_SECRET is not set")
+	}
+
+	jwt := util.NewJWT(secret)
+	userID, err := jwt.VerifyToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	userIDToInt, err := strconv.Atoi(userID)
+	result, err := t.UserRepository.GetOneByQuery(model.User{ID: uint(userIDToInt)})
+	if err != nil {
+		return nil, err
+	}
+
+	formatResponse := &response.UserResponse{
+		User: result,
+	}
+
 	return formatResponse, nil
 }
