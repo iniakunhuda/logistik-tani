@@ -7,8 +7,8 @@ import (
 type Sales struct {
 	ID               uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 	NoInvoice        string    `gorm:"type:varchar(100);not null" json:"no_invoice" validate:"required"`
-	IDPenjual        int       `gorm:"type:int;not null" json:"id_penjual" validate:"required"`
-	IDPembeli        int       `gorm:"type:int;not null" json:"id_pembeli" validate:"required"`
+	IDPenjual        uint       `gorm:"type:uint;not null" json:"id_penjual" validate:"required"`
+	IDPembeli        uint       `gorm:"type:uint;not null" json:"id_pembeli" validate:"required"`
 	TotalHarga       int       `gorm:"type:int;not null" json:"total_harga" validate:"required"`
 	Tanggal          time.Time `gorm:"type:date;not null" json:"tanggal" validate:"required"`
 	Status           string    `gorm:"type:enum('open','pending','done');not null" json:"status" validate:"required"`
@@ -20,5 +20,5 @@ type Sales struct {
 }
 
 func (Sales) TableName() string {
-	return "sale"
+	return "sales"
 }

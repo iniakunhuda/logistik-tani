@@ -7,7 +7,7 @@ import (
 type SalesDetail struct {
 	ID         uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 	IDSales    uint      `gorm:"type:bigint;not null" json:"id_sales"`
-	IDProduk   int       `gorm:"type:int;not null" json:"id_produk"`
+	IDProduk   uint       `gorm:"type:int;not null" json:"id_produk"`
 	Jenis      string    `gorm:"type:enum('pupuk','bibit','obat');not null" json:"jenis" validate:"required"`
 	Harga      int       `gorm:"type:int;not null" json:"harga" validate:"required"`
 	Qty        int       `gorm:"type:int;not null" json:"qty" validate:"required"`
@@ -19,5 +19,5 @@ type SalesDetail struct {
 }
 
 func (SalesDetail) TableName() string {
-	return "sale"
+	return "sales_detail"
 }

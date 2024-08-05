@@ -26,8 +26,9 @@ func main() {
 
 	// // Define command-line flags
 	serverAddr := flag.String("serverAddr", "", "HTTP server network address")
-	serverPort := flag.Int("serverPort", 4001, "HTTP server network port")
-	dsn := flag.String("dsn", "root:@tcp(localhost:3306)/crmtani_inventory?parseTime=true", "MySQL data source name")
+	serverPort := flag.Int("serverPort", 4002, "HTTP server network port")
+	dsn := flag.String("dsn", getEnv("SALES_DSN", "root:@tcp(localhost:3306)/crmtani_sales?parseTime=true"), "MySQL data source name")
+    
 	flag.Parse()
 
 	// // Create logger for writing information and error messages.
@@ -60,6 +61,15 @@ func main() {
 	infoLog.Printf("Starting server on %s", serverURI)
 	err = srv.ListenAndServe()
 	errLog.Fatal(err)
+}
+
+// getEnv retrieves the value of the environment variable named by the key
+// If the variable is not present, it returns the default value.
+func getEnv(key, defaultValue string) string {
+    if value, exists := os.LookupEnv(key); exists {
+        return value
+    }
+    return defaultValue
 }
 
 func openDB(dsn string) (*gorm.DB, error) {

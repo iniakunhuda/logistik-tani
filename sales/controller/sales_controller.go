@@ -13,17 +13,17 @@ import (
 )
 
 type SalesController struct {
-	inventoryService service.InventoryService
+	salesService service.SalesService
 }
 
-func NewSalesController(service service.InventoryService) *SalesController {
+func NewSalesController(service service.SalesService) *SalesController {
 	return &SalesController{
-		inventoryService: service,
+		salesService: service,
 	}
 }
 
 func (controller *SalesController) FindAll(w http.ResponseWriter, r *http.Request) {
-	dataResp, err := controller.inventoryService.FindAll()
+	dataResp, err := controller.salesService.FindAll()
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
@@ -36,7 +36,7 @@ func (controller *SalesController) FindById(w http.ResponseWriter, r *http.Reque
 	params := mux.Vars(r)
 	userId := params["id"]
 	userIdInt, _ := strconv.Atoi(userId)
-	dataResp, err := controller.inventoryService.FindById(userIdInt)
+	dataResp, err := controller.salesService.FindById(userIdInt)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
@@ -45,7 +45,7 @@ func (controller *SalesController) FindById(w http.ResponseWriter, r *http.Reque
 }
 
 func (controller *SalesController) Create(w http.ResponseWriter, r *http.Request) {
-	var userRequest request.CreateProdukRequest
+	var userRequest request.CreateSalesRequest
 
 	err := json.NewDecoder(r.Body).Decode(&userRequest)
 	if err != nil {
@@ -62,7 +62,7 @@ func (controller *SalesController) Create(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = controller.inventoryService.Create(userRequest)
+	err = controller.salesService.Create(userRequest)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
@@ -72,25 +72,6 @@ func (controller *SalesController) Create(w http.ResponseWriter, r *http.Request
 }
 
 func (controller *SalesController) Update(w http.ResponseWriter, r *http.Request) {
-	var userRequest request.UpdateUserRequest
-
-	err := json.NewDecoder(r.Body).Decode(&userRequest)
-	if err != nil {
-		util.FormatResponseError(w, http.StatusBadRequest, err)
-		return
-	}
-	defer r.Body.Close()
-
-	params := mux.Vars(r)
-	userId := params["id"]
-	userIdInt, _ := strconv.Atoi(userId)
-
-	err = controller.inventoryService.Update(userIdInt, userRequest)
-	if err != nil {
-		util.FormatResponseError(w, http.StatusInternalServerError, err)
-		return
-	}
-
 	util.FormatResponseSuccess(w, http.StatusOK, nil, nil)
 }
 
@@ -99,7 +80,7 @@ func (controller *SalesController) Delete(w http.ResponseWriter, r *http.Request
 	userId := params["id"]
 	userIdInt, _ := strconv.Atoi(userId)
 
-	err := controller.inventoryService.Delete(userIdInt)
+	err := controller.salesService.Delete(userIdInt)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return

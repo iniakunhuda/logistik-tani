@@ -1,0 +1,2 @@
+CREATE DATABASE IF NOT EXISTS crmtani_inventory;
+CREATE DATABASE IF NOT EXISTS crmtani_sales;

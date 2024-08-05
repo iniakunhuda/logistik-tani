@@ -1,20 +1,15 @@
 # Use the official Golang image to create a build artifact.
-FROM golang:1.22.2-alpine AS build
+FROM golang:1.22.2-alpine AS builder
 RUN adduser -D -g '' elf
-WORKDIR /opt/api
+WORKDIR /app
 COPY go.mod go.sum ./
-RUN go mod download && \
-    go mod verify
+RUN go mod download
 COPY . .
-RUN go build -o /opt/api/logistik-user ./cmd/app
+RUN go build -o sales_service .
 
-# Start a new stage from scratch using a lightweight alpine image
 FROM alpine:latest
-RUN apk --no-cache add ca-certificates
-RUN adduser -D -g '' elf
-WORKDIR /opt/api/
-COPY --from=build /opt/api/logistik-user .
-RUN chown elf:elf logistik-user
-USER elf
-EXPOSE 4000
-CMD ["./logistik-user"]
+WORKDIR /app
+COPY --from=builder /app/sales_service .
+COPY .env .
+EXPOSE 4002
+CMD ["./sales_service"]
