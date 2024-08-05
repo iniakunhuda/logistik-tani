@@ -40,7 +40,7 @@ func (t *InventoryRepositoryImpl) FindById(produkId int) (*model.Produk, error) 
 		return nil, result.Error
 	}
 	if result.RowsAffected == 0 {
-		return nil, errors.New("produk is not found")
+		return nil, errors.New("Product not found")
 	}
 	return &produkResult, nil
 }

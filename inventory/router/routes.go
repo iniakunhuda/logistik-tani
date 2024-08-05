@@ -12,10 +12,10 @@ func NewRouter(inventoryController *controller.InventoryController) *mux.Router 
 	inventory := r.PathPrefix("/api/inventory").Subrouter()
 	inventory.Use(util.AuthVerify)
 	inventory.HandleFunc("", inventoryController.FindAll).Methods("GET")
-	inventory.HandleFunc("{id}", inventoryController.FindById).Methods("GET")
+	inventory.HandleFunc("/{id}", inventoryController.FindById).Methods("GET")
 	inventory.HandleFunc("", inventoryController.Create).Methods("POST")
-	inventory.HandleFunc("{id}", inventoryController.Update).Methods("PUT")
-	inventory.HandleFunc("{id}", inventoryController.Delete).Methods("DELETE")
+	inventory.HandleFunc("/{id}", inventoryController.Update).Methods("PUT")
+	inventory.HandleFunc("/{id}", inventoryController.Delete).Methods("DELETE")
 
 	return r
 }
