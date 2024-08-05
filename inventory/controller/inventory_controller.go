@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/iniakunhuda/logistik-tani/inventory/model"
 	"github.com/iniakunhuda/logistik-tani/inventory/request"
 	"github.com/iniakunhuda/logistik-tani/inventory/service"
 	"github.com/iniakunhuda/logistik-tani/inventory/util"
@@ -23,7 +24,23 @@ func NewInventoryController(service service.InventoryService) *InventoryControll
 }
 
 func (controller *InventoryController) FindAll(w http.ResponseWriter, r *http.Request) {
-	dataResp, err := controller.inventoryService.FindAll()
+	userId := r.Header.Get("AuthUserID")
+	controller.inventoryService.SetUserId(userId)
+	userID, _ := strconv.ParseUint(userId, 10, 64)
+
+	q := r.URL.Query()
+	jenis := q.Get("jenis")
+	if jenis != "" {
+		dataResp, err := controller.inventoryService.FindAll(&model.Produk{Jenis: jenis, IDUser: uint(userID)})
+		if err != nil {
+			util.FormatResponseError(w, http.StatusInternalServerError, err)
+			return
+		}
+		util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+		return
+	}
+
+	dataResp, err := controller.inventoryService.FindAll(&model.Produk{IDUser: uint(userID)})
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
@@ -33,14 +50,19 @@ func (controller *InventoryController) FindAll(w http.ResponseWriter, r *http.Re
 }
 
 func (controller *InventoryController) FindById(w http.ResponseWriter, r *http.Request) {
+	// userId := r.Header.Get("AuthUserID")
+
 	params := mux.Vars(r)
-	userId := params["id"]
-	userIdInt, _ := strconv.Atoi(userId)
-	dataResp, err := controller.inventoryService.FindById(userIdInt)
+	productId := params["id"]
+	productIdInt, _ := strconv.Atoi(productId)
+	dataResp, err := controller.inventoryService.FindById(productIdInt)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
 	}
+
+	// TODO: Check user id
+
 	util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
 }
 
@@ -81,6 +103,8 @@ func (controller *InventoryController) Update(w http.ResponseWriter, r *http.Req
 	}
 	defer r.Body.Close()
 
+	// TODO: Check user id
+
 	params := mux.Vars(r)
 	userId := params["id"]
 	userIdInt, _ := strconv.Atoi(userId)
@@ -98,6 +122,8 @@ func (controller *InventoryController) Delete(w http.ResponseWriter, r *http.Req
 	params := mux.Vars(r)
 	userId := params["id"]
 	userIdInt, _ := strconv.Atoi(userId)
+
+	// TODO: Check user id
 
 	err := controller.inventoryService.Delete(userIdInt)
 	if err != nil {

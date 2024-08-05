@@ -11,17 +11,22 @@ import (
 type InventoryServiceImpl struct {
 	InventoryRepository repository.InventoryRepository
 	Validate            *validator.Validate
+	UserId              string
 }
 
 func NewInventoryServiceImpl(inventoryRepository repository.InventoryRepository, validate *validator.Validate) InventoryService {
 	return &InventoryServiceImpl{
 		InventoryRepository: inventoryRepository,
 		Validate:            validate,
+		// UserRemoteRepository: userRemoteRepository,
 	}
 }
 
-func (t *InventoryServiceImpl) Create(produk request.CreateProdukRequest) error {
+func (t *InventoryServiceImpl) SetUserId(userId string) {
+	t.UserId = userId
+}
 
+func (t *InventoryServiceImpl) Create(produk request.CreateProdukRequest) error {
 	produkModel := model.Produk{
 		IDUser:     produk.IDUser,
 		NamaProduk: produk.NamaProduk,
@@ -50,8 +55,8 @@ func (t *InventoryServiceImpl) Delete(produkId int) error {
 	return nil
 }
 
-func (t *InventoryServiceImpl) FindAll() ([]response.ProdukResponse, error) {
-	result, err := t.InventoryRepository.FindAll()
+func (t *InventoryServiceImpl) FindAll(produk *model.Produk) ([]response.ProdukResponse, error) {
+	result, err := t.InventoryRepository.GetAllByQuery(*produk)
 
 	if err != nil {
 		return nil, err
