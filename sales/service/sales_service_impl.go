@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -8,20 +9,25 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/iniakunhuda/logistik-tani/sales/model"
 	"github.com/iniakunhuda/logistik-tani/sales/repository"
+	"github.com/iniakunhuda/logistik-tani/sales/repository/remote"
 	"github.com/iniakunhuda/logistik-tani/sales/request"
 	"github.com/iniakunhuda/logistik-tani/sales/response"
 )
 
 type InventoryServiceImpl struct {
-	SalesRepository       repository.SalesRepository
-	SalesRepositoryDetail repository.SalesDetailRepository
-	Validate              *validator.Validate
+	TokenAuth                 string
+	SalesRepository           repository.SalesRepository
+	UserRemoteRepository      remote.UserRemoteRepository
+	InventoryRemoteRepository remote.InventoryRemoteRepository
+	Validate                  *validator.Validate
 }
 
 func NewInventoryServiceImpl(salesRepository repository.SalesRepository, validate *validator.Validate) SalesService {
 	return &InventoryServiceImpl{
-		SalesRepository: salesRepository,
-		Validate:        validate,
+		SalesRepository:           salesRepository,
+		UserRemoteRepository:      remote.NewUserRemoteRepositoryImpl(),
+		InventoryRemoteRepository: remote.NewInventoryRemoteRepositoryImpl(""), // TODO: set bearer token
+		Validate:                  validate,
 	}
 }
 
@@ -56,11 +62,6 @@ func (t *InventoryServiceImpl) GenerateNoInvoice() (string, error) {
 
 func (t *InventoryServiceImpl) Create(sales request.CreateSalesRequest) error {
 
-	// Validate the request
-	// Check is product exist
-
-	
-
 	noInv, err := t.GenerateNoInvoice()
 	if err != nil {
 		return err
@@ -74,19 +75,55 @@ func (t *InventoryServiceImpl) Create(sales request.CreateSalesRequest) error {
 		Status:           "open",
 		TotalHarga:       0,
 		IsPurchasedByIGM: false,
-		InvPurchasedIGM:  nil,
+	}
+
+	pembeliDetail, err := t.UserRemoteRepository.Find(strconv.Itoa(int(sales.IDPembeli)))
+	if err != nil {
+		return err
+	}
+
+	// Check stok produk
+	for _, value := range sales.Produk {
+		// Inventory Service: Check product stok
+		inventoryDetail, err := t.InventoryRemoteRepository.GetDetail(strconv.Itoa(int(value.IDProduk)))
+		if err != nil {
+			return err
+		}
+		if inventoryDetail.StokAktif < value.Qty {
+			return fmt.Errorf("stok produk %s tidak mencukupi. Stok tersedia: %d", inventoryDetail.NamaProduk, inventoryDetail.StokAktif)
+		}
 	}
 
 	salesDetailModel := []model.SalesDetail{}
 	for _, value := range sales.Produk {
+
+		// Inventory Service: Check product stok
+		inventoryDetail, err := t.InventoryRemoteRepository.GetDetail(strconv.Itoa(int(value.IDProduk)))
+		if err != nil {
+			return err
+		}
+
 		salesDetailModel = append(salesDetailModel, model.SalesDetail{
 			IDProduk:   value.IDProduk,
 			Jenis:      value.Jenis,
 			Harga:      int(value.Harga),
 			Qty:        int(value.Qty),
 			TotalHarga: int(value.Harga) * int(value.Qty),
-			Tanggal:    value.Tanggal,
 		})
+
+		// Inventory Service: Trigger stok update
+		err = t.InventoryRemoteRepository.UpdateReduceStok(strconv.Itoa(int(value.IDProduk)), strconv.Itoa(int(value.Qty)))
+		if err != nil {
+			return err
+		}
+
+		// Inventory Service: If pembeli is petani, then create inventory_petani
+		if pembeliDetail.Role == "petani" {
+			err = t.InventoryRemoteRepository.PostCreatePetani(inventoryDetail, value.Qty, sales.IDPembeli)
+			if err != nil {
+				return errors.New("postCreatePetani: " + err.Error())
+			}
+		}
 
 		totalHargaSales += int(value.Harga) * int(value.Qty)
 	}
@@ -97,8 +134,38 @@ func (t *InventoryServiceImpl) Create(sales request.CreateSalesRequest) error {
 		return err
 	}
 
+	return nil
+}
 
-	// Trigger stok update
+func (t *InventoryServiceImpl) Update(saleId int, userId int, sales request.UpdateSalesRequest) error {
+	// Validate the request
+	salesData, err := t.SalesRepository.GetOneByQuery(model.Sales{IDPenjual: uint(userId), ID: uint(saleId)})
+	if err != nil {
+		return err
+	}
+
+	if salesData.Status == "done" {
+		return errors.New("Sales already closed")
+	}
+
+	statusArr := []string{"open", "pending", "done", "cancel"}
+	isValid := false
+	for _, value := range statusArr {
+		if value == sales.Status {
+			isValid = true
+			break
+		}
+	}
+
+	if !isValid {
+		return errors.New("Invalid status. Available status: (open, pending, done, cancel)")
+	}
+
+	// Update the sales
+	err = t.SalesRepository.Update(model.Sales{ID: uint(saleId), Status: sales.Status})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -111,17 +178,29 @@ func (t *InventoryServiceImpl) Delete(salesId int) error {
 	return nil
 }
 
-func (t *InventoryServiceImpl) FindAll() ([]response.SalesResponse, error) {
-	result, err := t.SalesRepository.FindAll()
+func (t *InventoryServiceImpl) FindAll(sale *model.Sales) ([]response.SalesResponse, error) {
+	result, err := t.SalesRepository.GetAllByQuery(*sale)
 
 	if err != nil {
 		return nil, err
 	}
 
+	// get user service
+	users, err := t.UserRemoteRepository.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	listUser := map[uint]response.UserResponse{}
+	for _, value := range users {
+		listUser[value.ID] = value
+	}
+
 	var sales []response.SalesResponse
 	for _, value := range result {
 		newSalesDetail := response.SalesResponse{
-			Sales: value,
+			Sales:         value,
+			PenjualDetail: listUser[value.IDPenjual],
+			PembeliDetail: listUser[value.IDPembeli],
 		}
 		sales = append(sales, newSalesDetail)
 	}
@@ -129,14 +208,26 @@ func (t *InventoryServiceImpl) FindAll() ([]response.SalesResponse, error) {
 	return sales, nil
 }
 
-func (t *InventoryServiceImpl) FindById(salesId int) (response.SalesResponse, error) {
-	salesData, err := t.SalesRepository.FindById(salesId)
+func (t *InventoryServiceImpl) FindById(salesId int, userId uint) (response.SalesResponse, error) {
+	salesData, err := t.SalesRepository.GetOneByQuery(model.Sales{IDPenjual: userId, ID: uint(salesId)})
 	if err != nil {
 		return response.SalesResponse{}, err
 	}
 
+	// get user service
+	users, err := t.UserRemoteRepository.GetAll()
+	if err != nil {
+		return response.SalesResponse{}, err
+	}
+	listUser := map[uint]response.UserResponse{}
+	for _, value := range users {
+		listUser[value.ID] = value
+	}
+
 	formatResponse := response.SalesResponse{
-		Sales: *salesData,
+		Sales:         salesData,
+		PenjualDetail: listUser[salesData.IDPenjual],
+		PembeliDetail: listUser[salesData.IDPembeli],
 	}
 	return formatResponse, nil
 }

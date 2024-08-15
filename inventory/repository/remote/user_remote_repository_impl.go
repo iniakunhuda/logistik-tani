@@ -15,18 +15,18 @@ func NewUserRemoteRepositoryImpl() UserRemoteRepositoryImpl {
 }
 
 func (t UserRemoteRepositoryImpl) Profile() (response.UserResponse, error) {
-	resp, err := req.C().R().
+	var userResponse response.UserResponse
+	_, err := req.C().R().
 		SetHeader("Accept", "application/json").
 		SetBearerAuthToken("").
 		EnableDump().
+		SetSuccessResult(&userResponse).
 		Get("http://localhost:4000/api/users/profile")
 
 	if err != nil {
 		fmt.Println(err)
 		return response.UserResponse{}, err
 	}
-
-	fmt.Println(resp)
 
 	return response.UserResponse{}, nil
 }

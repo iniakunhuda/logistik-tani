@@ -6,14 +6,14 @@ import (
 	"github.com/iniakunhuda/logistik-tani/inventory/response"
 )
 
-type InventoryService interface {
+type InventoryPetaniService interface {
 	SetUserId(userId string)
 
 	Create(produk request.CreateProdukRequest) error
 	Update(produkId int, produk request.UpdateProdukRequest) error
 	Delete(produkId int) error
-	FindById(produkId int) (response.ProdukResponse, error)
-	FindAll(produk *model.Produk) ([]response.ProdukResponse, error)
+	FindById(produkId int) (response.ProdukPetaniResponse, error)
+	FindAll(produk *model.ProdukPetani) ([]response.ProdukPetaniResponse, error)
 
 	UpdateReduceStock(produkId int, stock int) error
 }

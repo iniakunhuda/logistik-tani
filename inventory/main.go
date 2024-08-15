@@ -49,7 +49,10 @@ func main() {
 	produkService := service.NewInventoryServiceImpl(produkRepository, validate)
 	produkController := controller.NewInventoryController(produkService)
 
-	routes := router.NewRouter(produkController)
+	produkPetaniService := service.NewInventoryPetaniServiceImpl(repository.NewInventoryPetaniRepositoryImpl(db), validate)
+	produkPetaniController := controller.NewInventoryPetaniController(produkPetaniService)
+
+	routes := router.NewRouter(produkController, produkPetaniController)
 	srv := &http.Server{
 		Addr:         serverURI,
 		ErrorLog:     errLog,

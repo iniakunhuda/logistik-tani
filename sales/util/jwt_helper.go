@@ -2,13 +2,33 @@ package util
 
 import (
 	"errors"
-	"time"
+	"net/http"
+	"os"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type JWT struct {
-	secretKey []byte
+	secretKey   []byte
+	userId      string
+	bearerToken string
+}
+
+func (j *JWT) SetBearerToken(token string) {
+	j.bearerToken = token
+}
+
+func (j *JWT) GetBearerToken() string {
+	return j.bearerToken
+}
+
+func (j *JWT) SetUserID(userId string) {
+	j.userId = userId
+}
+
+func (j *JWT) GetUserID() string {
+	return j.userId
 }
 
 func NewJWT(secretKey string) *JWT {
@@ -17,29 +37,9 @@ func NewJWT(secretKey string) *JWT {
 	}
 }
 
-func (j *JWT) CreateToken(userID string, email string, expirationTime time.Duration) (string, error) {
-	claims := jwt.MapClaims{
-		"userID": userID,
-		"email":  email,
-		"exp":    time.Now().Add(expirationTime * 24).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	signedToken, err := token.SignedString(j.secretKey)
-	if err != nil {
-		return "", err
-	}
-
-	return signedToken, nil
-}
-
 func (j *JWT) VerifyToken(tokenString string) (string, error) {
+	tokenString = tokenString[len("Bearer "):]
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("invalid token signing method")
-		}
-
 		return j.secretKey, nil
 	})
 
@@ -47,15 +47,51 @@ func (j *JWT) VerifyToken(tokenString string) (string, error) {
 		return "", err
 	}
 
+	if !token.Valid {
+		return "", errors.New("invalid token")
+	}
+
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
 		return "", errors.New("invalid token")
 	}
 
-	userID, ok := claims["userID"].(string)
+	userID, ok := claims["user_id"].(string)
 	if !ok {
 		return "", errors.New("invalid token")
 	}
 
 	return userID, nil
+}
+
+func AuthVerify(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var header = r.Header.Get("Authorization")
+		header = strings.TrimSpace(header)
+
+		secret := os.Getenv("JWT_SECRET")
+		if secret == "" {
+			FormatResponseError(w, http.StatusForbidden, errors.New("JWT_SECRET is not set"))
+			return
+		}
+
+		if header == "" {
+			FormatResponseError(w, http.StatusForbidden, errors.New("Login required"))
+			return
+		}
+
+		jwt := NewJWT(secret)
+		userId, err := jwt.VerifyToken(header)
+		if err != nil {
+			FormatResponseError(w, http.StatusForbidden, errors.New("Error verifying JWT token: "+err.Error()))
+			return
+		}
+
+		jwt.SetUserID(userId)
+		jwt.SetBearerToken(header)
+
+		r.Header.Set("Authorization", header)
+		r.Header.Set("AuthUserID", userId)
+		next.ServeHTTP(w, r)
+	})
 }

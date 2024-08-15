@@ -1,6 +1,6 @@
 package request
 
-type UpdateUserRequest struct {
+type UpdateProdukRequest struct {
 	IDUser     uint   `json:"id_user"`
 	NamaProduk string `json:"nama_produk"`
 	Hpp        uint   `json:"hpp"`

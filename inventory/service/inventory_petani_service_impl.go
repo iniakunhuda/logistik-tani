@@ -10,26 +10,25 @@ import (
 	"github.com/iniakunhuda/logistik-tani/inventory/response"
 )
 
-type InventoryServiceImpl struct {
-	InventoryRepository repository.InventoryRepository
+type InventoryPetaniServiceImpl struct {
+	InventoryRepository repository.InventoryPetaniRepository
 	Validate            *validator.Validate
 	UserId              string
 }
 
-func NewInventoryServiceImpl(inventoryRepository repository.InventoryRepository, validate *validator.Validate) InventoryService {
-	return &InventoryServiceImpl{
+func NewInventoryPetaniServiceImpl(inventoryRepository repository.InventoryPetaniRepository, validate *validator.Validate) InventoryPetaniService {
+	return &InventoryPetaniServiceImpl{
 		InventoryRepository: inventoryRepository,
 		Validate:            validate,
-		// UserRemoteRepository: userRemoteRepository,
 	}
 }
 
-func (t *InventoryServiceImpl) SetUserId(userId string) {
+func (t *InventoryPetaniServiceImpl) SetUserId(userId string) {
 	t.UserId = userId
 }
 
-func (t *InventoryServiceImpl) Create(produk request.CreateProdukRequest) error {
-	produkModel := model.Produk{
+func (t *InventoryPetaniServiceImpl) Create(produk request.CreateProdukRequest) error {
+	produkModel := model.ProdukPetani{
 		IDUser:     produk.IDUser,
 		NamaProduk: produk.NamaProduk,
 		Hpp:        produk.Hpp,
@@ -49,7 +48,7 @@ func (t *InventoryServiceImpl) Create(produk request.CreateProdukRequest) error 
 	return nil
 }
 
-func (t *InventoryServiceImpl) Delete(produkId int) error {
+func (t *InventoryPetaniServiceImpl) Delete(produkId int) error {
 	err := t.InventoryRepository.Delete(produkId)
 	if err != nil {
 		return err
@@ -57,17 +56,17 @@ func (t *InventoryServiceImpl) Delete(produkId int) error {
 	return nil
 }
 
-func (t *InventoryServiceImpl) FindAll(produk *model.Produk) ([]response.ProdukResponse, error) {
+func (t *InventoryPetaniServiceImpl) FindAll(produk *model.ProdukPetani) ([]response.ProdukPetaniResponse, error) {
 	result, err := t.InventoryRepository.GetAllByQuery(*produk)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var produks []response.ProdukResponse
+	var produks []response.ProdukPetaniResponse
 	for _, value := range result {
-		produk := response.ProdukResponse{
-			Produk: value,
+		produk := response.ProdukPetaniResponse{
+			ProdukPetani: value,
 		}
 		produks = append(produks, produk)
 	}
@@ -75,19 +74,19 @@ func (t *InventoryServiceImpl) FindAll(produk *model.Produk) ([]response.ProdukR
 	return produks, nil
 }
 
-func (t *InventoryServiceImpl) FindById(produkId int) (response.ProdukResponse, error) {
+func (t *InventoryPetaniServiceImpl) FindById(produkId int) (response.ProdukPetaniResponse, error) {
 	produkData, err := t.InventoryRepository.FindById(produkId)
 	if err != nil {
-		return response.ProdukResponse{}, err
+		return response.ProdukPetaniResponse{}, err
 	}
 
-	formatResponse := response.ProdukResponse{
-		Produk: *produkData,
+	formatResponse := response.ProdukPetaniResponse{
+		ProdukPetani: *produkData,
 	}
 	return formatResponse, nil
 }
 
-func (t *InventoryServiceImpl) Update(produkId int, produk request.UpdateProdukRequest) error {
+func (t *InventoryPetaniServiceImpl) Update(produkId int, produk request.UpdateProdukRequest) error {
 	produkData, err := t.InventoryRepository.FindById(produkId)
 	if err != nil {
 		return err
@@ -125,7 +124,7 @@ func (t *InventoryServiceImpl) Update(produkId int, produk request.UpdateProdukR
 	return nil
 }
 
-func (t *InventoryServiceImpl) UpdateReduceStock(produkId int, stokTerbaru int) error {
+func (t *InventoryPetaniServiceImpl) UpdateReduceStock(produkId int, stokTerbaru int) error {
 	produkData, err := t.InventoryRepository.FindById(produkId)
 	if err != nil {
 		return err

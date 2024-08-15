@@ -7,16 +7,16 @@ import (
 	"gorm.io/gorm"
 )
 
-type InventoryRepositoryImpl struct {
+type InventoryPetaniRepositoryImpl struct {
 	Db *gorm.DB
 }
 
-func NewInventoryRepositoryImpl(Db *gorm.DB) InventoryRepository {
-	return &InventoryRepositoryImpl{Db: Db}
+func NewInventoryPetaniRepositoryImpl(Db *gorm.DB) InventoryPetaniRepository {
+	return &InventoryPetaniRepositoryImpl{Db: Db}
 }
 
-func (t *InventoryRepositoryImpl) Delete(dataId int) error {
-	var data model.Produk
+func (t *InventoryPetaniRepositoryImpl) Delete(dataId int) error {
+	var data model.ProdukPetani
 	result := t.Db.Where("id = ?", dataId).Delete(&data)
 	if result.Error != nil {
 		return result.Error
@@ -24,8 +24,8 @@ func (t *InventoryRepositoryImpl) Delete(dataId int) error {
 	return nil
 }
 
-func (t *InventoryRepositoryImpl) FindAll() (produks []model.Produk, err error) {
-	var dataList []model.Produk
+func (t *InventoryPetaniRepositoryImpl) FindAll() (produks []model.ProdukPetani, err error) {
+	var dataList []model.ProdukPetani
 	result := t.Db.Find(&dataList)
 	if result.Error != nil {
 		return nil, result.Error
@@ -33,8 +33,8 @@ func (t *InventoryRepositoryImpl) FindAll() (produks []model.Produk, err error) 
 	return dataList, nil
 }
 
-func (t *InventoryRepositoryImpl) FindById(produkId int) (*model.Produk, error) {
-	var dataRow model.Produk
+func (t *InventoryPetaniRepositoryImpl) FindById(produkId int) (*model.ProdukPetani, error) {
+	var dataRow model.ProdukPetani
 	result := t.Db.Find(&dataRow, produkId)
 	if result.Error != nil {
 		return nil, result.Error
@@ -45,7 +45,7 @@ func (t *InventoryRepositoryImpl) FindById(produkId int) (*model.Produk, error) 
 	return &dataRow, nil
 }
 
-func (t *InventoryRepositoryImpl) Save(produk model.Produk) error {
+func (t *InventoryPetaniRepositoryImpl) Save(produk model.ProdukPetani) error {
 	result := t.Db.Create(&produk)
 	if result.Error != nil {
 		return result.Error
@@ -53,7 +53,7 @@ func (t *InventoryRepositoryImpl) Save(produk model.Produk) error {
 	return nil
 }
 
-func (t *InventoryRepositoryImpl) Update(produk model.Produk) error {
+func (t *InventoryPetaniRepositoryImpl) Update(produk model.ProdukPetani) error {
 	result := t.Db.Model(&produk).Updates(produk)
 	if result.Error != nil {
 		return result.Error
@@ -61,8 +61,8 @@ func (t *InventoryRepositoryImpl) Update(produk model.Produk) error {
 	return nil
 }
 
-func (t *InventoryRepositoryImpl) GetAllByQuery(produk model.Produk) (produks []model.Produk, err error) {
-	var dataList []model.Produk
+func (t *InventoryPetaniRepositoryImpl) GetAllByQuery(produk model.ProdukPetani) (produks []model.ProdukPetani, err error) {
+	var dataList []model.ProdukPetani
 	result := t.Db.Where(&produk).Find(&dataList)
 	if result.Error != nil {
 		return nil, result.Error
@@ -70,10 +70,10 @@ func (t *InventoryRepositoryImpl) GetAllByQuery(produk model.Produk) (produks []
 	return dataList, nil
 }
 
-func (t *InventoryRepositoryImpl) GetOneByQuery(produk model.Produk) (produkData model.Produk, err error) {
+func (t *InventoryPetaniRepositoryImpl) GetOneByQuery(produk model.ProdukPetani) (produkData model.ProdukPetani, err error) {
 	result := t.Db.Where(&produk).First(&produkData)
 	if result.Error != nil {
-		return model.Produk{}, result.Error
+		return model.ProdukPetani{}, result.Error
 	}
 	return produkData, nil
 }

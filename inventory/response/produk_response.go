@@ -4,5 +4,8 @@ import "github.com/iniakunhuda/logistik-tani/inventory/model"
 
 type ProdukResponse struct {
 	model.Produk
-	Password *struct{} `json:"password,omitempty"`
+}
+
+type ProdukPetaniResponse struct {
+	model.ProdukPetani
 }

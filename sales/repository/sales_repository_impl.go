@@ -34,7 +34,7 @@ func (t *SalesRepositoryImpl) Delete(saleId int) error {
 
 func (t *SalesRepositoryImpl) FindAll() (sales []model.Sales, err error) {
 	var saleList []model.Sales
-	result := t.Db.Find(&saleList)
+	result := t.Db.Preload("SalesDetail").Find(&saleList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -61,14 +61,13 @@ func (t *SalesRepositoryImpl) Save(sale model.Sales, salesDetail []model.SalesDe
 			return err // Return error to rollback
 		}
 
+		// Insert the SalesDetail records
 		for i := range salesDetail {
 			salesDetail[i].IDSales = sale.ID
 		}
-
 		if err := tx.Create(&salesDetail).Error; err != nil {
 			return err // Return error to rollback
 		}
-		// If no errors, return nil to commit
 		return nil
 	})
 
@@ -79,16 +78,21 @@ func (t *SalesRepositoryImpl) Save(sale model.Sales, salesDetail []model.SalesDe
 }
 
 func (t *SalesRepositoryImpl) Update(sale model.Sales) error {
-	result := t.Db.Model(&sale).Updates(sale)
-	if result.Error != nil {
-		return result.Error
+	err := t.Db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&sale).Updates(sale).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
 func (t *SalesRepositoryImpl) GetAllByQuery(sale model.Sales) (sales []model.Sales, err error) {
 	var saleList []model.Sales
-	result := t.Db.Where(&sale).Find(&saleList)
+	result := t.Db.Preload("SalesDetail").Where(&sale).Find(&saleList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -96,7 +100,7 @@ func (t *SalesRepositoryImpl) GetAllByQuery(sale model.Sales) (sales []model.Sal
 }
 
 func (t *SalesRepositoryImpl) GetOneByQuery(sale model.Sales) (saleData model.Sales, err error) {
-	result := t.Db.Where(&sale).First(&saleData)
+	result := t.Db.Preload("SalesDetail").Where(&sale).First(&saleData)
 	if result.Error != nil {
 		return model.Sales{}, result.Error
 	}
