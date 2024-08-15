@@ -140,3 +140,15 @@ func (t *InventoryServiceImpl) UpdateReduceStock(produkId int, stokTerbaru int) 
 
 	return nil
 }
+
+func (t *InventoryServiceImpl) UpdateIncreaseStock(produkId int, stokTerbaru int) error {
+	produkData, err := t.InventoryRepository.FindById(produkId)
+	if err != nil {
+		return err
+	}
+
+	produkData.StokAktif = produkData.StokAktif + uint(stokTerbaru)
+	t.InventoryRepository.Update(*produkData)
+
+	return nil
+}

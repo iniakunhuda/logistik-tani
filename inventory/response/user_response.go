@@ -11,8 +11,8 @@ type UserResponse struct {
 	Telp     string `json:"telp" validate:"required"`
 	Role     string `json:"role" validate:"required"`
 
-	Saldo       uint   `json:"saldo"`
-	LastLogin   string `json:"last_login"`
+	Saldo uint `json:"saldo"`
+	// LastLogin   string `json:"last_login"`
 	AlamatKebun string `json:"alamat_kebun"`
 	TotalObat   uint   `json:"total_obat"`
 	TotalPupuk  uint   `json:"total_pupuk"`

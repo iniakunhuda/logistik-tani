@@ -8,27 +8,27 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
-	"github.com/iniakunhuda/logistik-tani/sales/model"
-	"github.com/iniakunhuda/logistik-tani/sales/request"
-	"github.com/iniakunhuda/logistik-tani/sales/service"
-	"github.com/iniakunhuda/logistik-tani/sales/util"
+	"github.com/iniakunhuda/logistik-tani/purchase/model"
+	"github.com/iniakunhuda/logistik-tani/purchase/request"
+	"github.com/iniakunhuda/logistik-tani/purchase/service"
+	"github.com/iniakunhuda/logistik-tani/purchase/util"
 )
 
-type SalesController struct {
-	salesService service.SalesService
+type PurchaseController struct {
+	purchaseService service.PurchaseService
 }
 
-func NewSalesController(service service.SalesService) *SalesController {
-	return &SalesController{
-		salesService: service,
+func NewPurchaseController(service service.PurchaseService) *PurchaseController {
+	return &PurchaseController{
+		purchaseService: service,
 	}
 }
 
-func (controller *SalesController) FindAll(w http.ResponseWriter, r *http.Request) {
+func (controller *PurchaseController) FindAll(w http.ResponseWriter, r *http.Request) {
 	userId := r.Header.Get("AuthUserID")
 	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
 
-	dataResp, err := controller.salesService.FindAll(&model.Sales{IDPenjual: uint(userIdUint)})
+	dataResp, err := controller.purchaseService.FindAll(&model.Purchase{IDPembeli: uint(userIdUint)})
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
@@ -37,14 +37,14 @@ func (controller *SalesController) FindAll(w http.ResponseWriter, r *http.Reques
 	util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
 }
 
-func (controller *SalesController) FindById(w http.ResponseWriter, r *http.Request) {
+func (controller *PurchaseController) FindById(w http.ResponseWriter, r *http.Request) {
 	userId := r.Header.Get("AuthUserID")
 	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
 
 	params := mux.Vars(r)
-	salesId := params["id"]
-	salesIdInt, _ := strconv.Atoi(salesId)
-	dataResp, err := controller.salesService.FindById(salesIdInt, uint(userIdUint))
+	purchaseId := params["id"]
+	purchaseIdInt, _ := strconv.Atoi(purchaseId)
+	dataResp, err := controller.purchaseService.FindById(purchaseIdInt, uint(userIdUint))
 	if err != nil {
 		util.FormatResponseError(w, http.StatusNotFound, err)
 		return
@@ -52,11 +52,11 @@ func (controller *SalesController) FindById(w http.ResponseWriter, r *http.Reque
 	util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
 }
 
-func (controller *SalesController) Create(w http.ResponseWriter, r *http.Request) {
+func (controller *PurchaseController) Create(w http.ResponseWriter, r *http.Request) {
 	userId := r.Header.Get("AuthUserID")
 	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
 
-	var userRequest request.CreateSalesRequest
+	var userRequest request.CreatePurchaseRequest
 	err := json.NewDecoder(r.Body).Decode(&userRequest)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusBadRequest, err)
@@ -64,7 +64,7 @@ func (controller *SalesController) Create(w http.ResponseWriter, r *http.Request
 	}
 	defer r.Body.Close()
 
-	if userRequest.IDPenjual != uint(userIdUint) {
+	if userRequest.IDPembeli != uint(userIdUint) {
 		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User tidak sama"))
 		return
 	}
@@ -77,7 +77,7 @@ func (controller *SalesController) Create(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = controller.salesService.Create(userRequest)
+	err = controller.purchaseService.Create(userRequest)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
@@ -86,13 +86,16 @@ func (controller *SalesController) Create(w http.ResponseWriter, r *http.Request
 	util.FormatResponseSuccess(w, http.StatusCreated, nil, nil)
 }
 
-func (controller *SalesController) Update(w http.ResponseWriter, r *http.Request) {
+func (controller *PurchaseController) Update(w http.ResponseWriter, r *http.Request) {
+	util.FormatResponseError(w, http.StatusNotFound, errors.New("Pembelian tidak dapat dihapus"))
+	return
+	
 	// TODO: only can update status based user login
 	util.FormatResponseSuccess(w, http.StatusOK, nil, nil)
 }
 
-func (controller *SalesController) Delete(w http.ResponseWriter, r *http.Request) {
-	util.FormatResponseError(w, http.StatusNotFound, errors.New("Penjualan tidak dapat dihapus"))
+func (controller *PurchaseController) Delete(w http.ResponseWriter, r *http.Request) {
+	util.FormatResponseError(w, http.StatusNotFound, errors.New("Pembelian tidak dapat dihapus"))
 	return
 
 	userId := r.Header.Get("AuthUserID")
@@ -102,18 +105,18 @@ func (controller *SalesController) Delete(w http.ResponseWriter, r *http.Request
 	salesId := params["id"]
 	salesIdInt, _ := strconv.Atoi(salesId)
 
-	dataResp, err := controller.salesService.FindById(salesIdInt, uint(userIdUint))
+	dataResp, err := controller.purchaseService.FindById(salesIdInt, uint(userIdUint))
 	if err != nil {
 		util.FormatResponseError(w, http.StatusNotFound, err)
 		return
 	}
 
-	if dataResp.IDPenjual != uint(userIdUint) {
+	if dataResp.IDPembeli != uint(userIdUint) {
 		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User tidak sama"))
 		return
 	}
 
-	err = controller.salesService.Delete(salesIdInt)
+	err = controller.purchaseService.Delete(salesIdInt)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return

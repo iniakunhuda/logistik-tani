@@ -16,4 +16,5 @@ type InventoryService interface {
 	FindAll(produk *model.Produk) ([]response.ProdukResponse, error)
 
 	UpdateReduceStock(produkId int, stock int) error
+	UpdateIncreaseStock(produkId int, stock int) error
 }

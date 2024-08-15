@@ -15,7 +15,7 @@ type User struct {
 	Role     string `gorm:"type:varchar(15);not null" json:"role" validate:"required"`
 
 	Saldo       uint   `gorm:"default:0" json:"saldo"`
-	LastLogin   string `gorm:"null" json:"last_login"`
+	// LastLogin   string `gorm:"null" json:"last_login"`
 	AlamatKebun string `gorm:"type:varchar(255);null" json:"alamat_kebun"`
 	TotalObat   uint   `gorm:"default:0" json:"total_obat"`
 	TotalPupuk  uint   `gorm:"default:0" json:"total_pupuk"`

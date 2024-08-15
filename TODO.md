@@ -1,13 +1,12 @@
 Sales Services
 
-- [ ] Create
+- [v] Create
 - [ ] Update Status aja
-- [ ] Order ke petani, create inventory_petani
+- [v] Order ke petani, create inventory_petani
 
 
 Purchase
 
 - [ ] Create
 - [ ] Update
-- [ ] Remove
 

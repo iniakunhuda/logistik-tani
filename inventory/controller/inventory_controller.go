@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -30,9 +31,25 @@ func (controller *InventoryController) FindAll(w http.ResponseWriter, r *http.Re
 	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
 
 	q := r.URL.Query()
-	jenis := q.Get("jenis")
-	if jenis != "" {
-		dataResp, err := controller.inventoryService.FindAll(&model.Produk{Jenis: jenis, IDUser: uint(userIdUint)})
+	filterJenis := q.Get("jenis")
+	filterIdUser := q.Get("idUser")
+
+	if filterJenis != "" {
+		dataResp, err := controller.inventoryService.FindAll(&model.Produk{Jenis: filterJenis, IDUser: uint(userIdUint)})
+		if err != nil {
+			util.FormatResponseError(w, http.StatusInternalServerError, err)
+			return
+		}
+		util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+		return
+	}
+
+	if filterIdUser != "" {
+		filterIdUserInt, err := strconv.ParseUint(filterIdUser, 10, 32)
+		if err != nil {
+			log.Fatalf("Error converting filterIdUser to uint: %v", err)
+		}
+		dataResp, err := controller.inventoryService.FindAll(&model.Produk{IDUser: uint(filterIdUserInt)})
 		if err != nil {
 			util.FormatResponseError(w, http.StatusInternalServerError, err)
 			return
@@ -172,6 +189,48 @@ func (controller *InventoryController) Delete(w http.ResponseWriter, r *http.Req
 }
 
 func (controller *InventoryController) FindAllWithoutAuth(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	filterJenis := q.Get("jenis")
+	filterIdUser := q.Get("idUser")
+
+	if filterJenis != "" && filterIdUser != "" {
+		filterIdUserInt, err := strconv.ParseUint(filterIdUser, 10, 32)
+		if err != nil {
+			log.Fatalf("Error converting filterIdUser to uint: %v", err)
+		}
+		dataResp, err := controller.inventoryService.FindAll(&model.Produk{Jenis: filterJenis, IDUser: uint(filterIdUserInt)})
+		if err != nil {
+			util.FormatResponseError(w, http.StatusInternalServerError, err)
+			return
+		}
+		util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+		return
+	}
+
+	if filterJenis != "" {
+		dataResp, err := controller.inventoryService.FindAll(&model.Produk{Jenis: filterJenis})
+		if err != nil {
+			util.FormatResponseError(w, http.StatusInternalServerError, err)
+			return
+		}
+		util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+		return
+	}
+
+	if filterIdUser != "" {
+		filterIdUserInt, err := strconv.ParseUint(filterIdUser, 10, 32)
+		if err != nil {
+			log.Fatalf("Error converting filterIdUser to uint: %v", err)
+		}
+		dataResp, err := controller.inventoryService.FindAll(&model.Produk{IDUser: uint(filterIdUserInt)})
+		if err != nil {
+			util.FormatResponseError(w, http.StatusInternalServerError, err)
+			return
+		}
+		util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+		return
+	}
+
 	dataResp, err := controller.inventoryService.FindAll(&model.Produk{})
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
@@ -214,6 +273,35 @@ func (controller *InventoryController) UpdateReduceStock(w http.ResponseWriter, 
 	}
 
 	err = controller.inventoryService.UpdateReduceStock(productIdInt, stokTerbaru)
+	if err != nil {
+		fmt.Print(err)
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, nil, nil)
+}
+
+func (controller *InventoryController) UpdateIncreaseStock(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	productId := params["id"]
+	productIdInt, _ := strconv.Atoi(productId)
+
+	var requestBody request.UpdateStockProdukRequest
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+	defer r.Body.Close()
+
+	stokTerbaru, err := strconv.Atoi(requestBody.StokTerbaru)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	err = controller.inventoryService.UpdateIncreaseStock(productIdInt, stokTerbaru)
 	if err != nil {
 		fmt.Print(err)
 		util.FormatResponseError(w, http.StatusInternalServerError, err)

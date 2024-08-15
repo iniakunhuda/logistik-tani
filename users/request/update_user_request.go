@@ -8,7 +8,7 @@ type UpdateUserRequest struct {
 	Role   string `json:"role" validate:"required"`
 
 	Saldo       uint   `json:"saldo"`
-	LastLogin   string `json:"last_login"`
+	// LastLogin   string `json:"last_login"`
 	AlamatKebun string `json:"alamat_kebun"`
 	TotalObat   uint   `json:"total_obat"`
 	TotalPupuk  uint   `json:"total_pupuk"`

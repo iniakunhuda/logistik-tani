@@ -42,7 +42,7 @@ func (t *UserServiceImpl) Create(user request.CreateUserRequest) error {
 		Telp:         user.Telp,
 		Role:         user.Role,
 		Saldo:        user.Saldo,
-		LastLogin:    "",
+		// LastLogin:    "",
 		AlamatKebun:  user.AlamatKebun,
 		TotalObat:    user.TotalObat,
 		TotalPupuk:   user.TotalPupuk,
@@ -126,9 +126,9 @@ func (t *UserServiceImpl) Update(userId int, user request.UpdateUserRequest) err
 		userData.Saldo = user.Saldo
 	}
 
-	if user.LastLogin != "" {
-		userData.LastLogin = user.LastLogin
-	}
+	// if user.LastLogin != "" {
+	// 	userData.LastLogin = user.LastLogin
+	// }
 	if user.AlamatKebun != "" {
 		userData.AlamatKebun = user.AlamatKebun
 	}
@@ -210,7 +210,7 @@ func (t *UserServiceImpl) Login(email string, password string) (response.UserRes
 	userData.TokenExpired = &tokenExpiredTime
 	userData.Token = &token
 
-	userData.LastLogin = util.GetTimeNow()
+	// userData.LastLogin = util.GetTimeNow()
 
 	err = t.UserRepository.Update(userData)
 	if err != nil {
