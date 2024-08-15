@@ -15,65 +15,94 @@ func NewSalesRepositoryImpl(Db *gorm.DB) SalesRepository {
 	return &SalesRepositoryImpl{Db: Db}
 }
 
-func (t *SalesRepositoryImpl) Delete(userId int) error {
-	var user model.Sales
-	result := t.Db.Where("id = ?", userId).Delete(&user)
+func (t *SalesRepositoryImpl) FindLastRow() (sale *model.Sales, err error) {
+	result := t.Db.Order("id desc").First(&sale)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return sale, nil
+}
+
+func (t *SalesRepositoryImpl) Delete(saleId int) error {
+	var sale model.Sales
+	result := t.Db.Where("id = ?", saleId).Delete(&sale)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
 
-func (t *SalesRepositoryImpl) FindAll() (produks []model.Sales, err error) {
-	var produkList []model.Sales
-	result := t.Db.Find(&produkList)
+func (t *SalesRepositoryImpl) FindAll() (sales []model.Sales, err error) {
+	var saleList []model.Sales
+	result := t.Db.Preload("SalesDetail").Find(&saleList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return produkList, nil
+	return saleList, nil
 }
 
-func (t *SalesRepositoryImpl) FindById(produkId int) (*model.Sales, error) {
-	var produkResult model.Sales
-	result := t.Db.Find(&produkResult, produkId)
+func (t *SalesRepositoryImpl) FindById(saleId int) (*model.Sales, error) {
+	var saleResult model.Sales
+	result := t.Db.Find(&saleResult, saleId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	if result.RowsAffected == 0 {
-		return nil, errors.New("produk is not found")
+		return nil, errors.New("sale is not found")
 	}
-	return &produkResult, nil
+	return &saleResult, nil
 }
 
-func (t *SalesRepositoryImpl) Save(produk model.Sales) error {
-	result := t.Db.Create(&produk)
-	if result.Error != nil {
-		return result.Error
+func (t *SalesRepositoryImpl) Save(sale model.Sales, salesDetail []model.SalesDetail) error {
+	// Execute the transaction
+	err := t.Db.Transaction(func(tx *gorm.DB) error {
+		// Insert the Sales record
+		if err := tx.Create(&sale).Error; err != nil {
+			return err // Return error to rollback
+		}
+
+		// Insert the SalesDetail records
+		for i := range salesDetail {
+			salesDetail[i].IDSales = sale.ID
+		}
+		if err := tx.Create(&salesDetail).Error; err != nil {
+			return err // Return error to rollback
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (t *SalesRepositoryImpl) Update(produk model.Sales) error {
-	result := t.Db.Model(&produk).Updates(produk)
-	if result.Error != nil {
-		return result.Error
+func (t *SalesRepositoryImpl) Update(sale model.Sales) error {
+	err := t.Db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&sale).Updates(sale).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (t *SalesRepositoryImpl) GetAllByQuery(produk model.Sales) (produks []model.Sales, err error) {
-	var produkList []model.Sales
-	result := t.Db.Where(&produk).Find(&produkList)
+func (t *SalesRepositoryImpl) GetAllByQuery(sale model.Sales) (sales []model.Sales, err error) {
+	var saleList []model.Sales
+	result := t.Db.Preload("SalesDetail").Where(&sale).Find(&saleList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return produkList, nil
+	return saleList, nil
 }
 
-func (t *SalesRepositoryImpl) GetOneByQuery(produk model.Sales) (produkData model.Sales, err error) {
-	result := t.Db.Where(&produk).First(&produkData)
+func (t *SalesRepositoryImpl) GetOneByQuery(sale model.Sales) (saleData model.Sales, err error) {
+	result := t.Db.Preload("SalesDetail").Where(&sale).First(&saleData)
 	if result.Error != nil {
 		return model.Sales{}, result.Error
 	}
-	return produkData, nil
+	return saleData, nil
 }

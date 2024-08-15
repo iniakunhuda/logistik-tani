@@ -1,7 +1,10 @@
 package util
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
+	"os"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -27,4 +30,22 @@ func VerifyPassword(password, hash string) bool {
 
 func GetTimeNow() string {
 	return time.Now().Format("2006-01-02 15:04:05")
+}
+
+func PrettyJSONInline(input []byte) ([]byte, error) {
+	var js json.RawMessage
+
+	if err := json.Unmarshal(input, &js); err != nil {
+		return nil, errors.New("malformed json")
+	}
+
+	// To output pretty with indent use `json.MarshalIndent` instead
+	return json.Marshal(js)
+}
+
+func GetEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
 }

@@ -8,14 +8,14 @@ import (
 func NewRouter(userController *controller.UserController, authController *controller.AuthController) *mux.Router {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/api/users/", userController.FindAll).Methods("GET")
+	r.HandleFunc("/api/users", userController.FindAll).Methods("GET")
+	r.HandleFunc("/api/users/login", authController.Login).Methods("POST")
+	r.HandleFunc("/api/users/profile", authController.Profile).Methods("GET")
+
 	r.HandleFunc("/api/users/{id}", userController.FindById).Methods("GET")
-	r.HandleFunc("/api/users/", userController.Create).Methods("POST")
+	r.HandleFunc("/api/users", userController.Create).Methods("POST")
 	r.HandleFunc("/api/users/{id}", userController.Update).Methods("PUT")
 	r.HandleFunc("/api/users/{id}", userController.Delete).Methods("DELETE")
-
-	r.HandleFunc("/api/users/login/", authController.Login).Methods("POST")
-	r.HandleFunc("/api/users/profile/", authController.Profile).Methods("GET")
 
 	return r
 }

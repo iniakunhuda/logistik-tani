@@ -1,32 +1,42 @@
-# create docker-compose for website folder with golang
-
-version: '3.7'
+version: '3.8'
 
 services:
-
-  website:
-    build: ./website
+  inventory:
+    build:
+      context: ./inventory
+      dockerfile: Dockerfile
+    container_name: inventory_service
     ports:
-      - "8000:8000"
-    environment:
-      - USERS_API_URL=http://users:4000/api/users/
+      - "4001:4001"  # Map the host port to the container port
+    env_file:
+      - ./inventory/.env
+    depends_on:
+      - db
 
-  users:
-    build: ./users
+  sales:
+    build:
+      context: ./sales
+      dockerfile: Dockerfile
+    container_name: sales_service
     ports:
-      - "4000:4000"
+      - "4002:4002"
+    env_file:
+      - ./sales/.env
     depends_on:
       - db
 
   db:
-    image: mysql:latest
-    restart: always
+    image: mysql:latest  
+    container_name: database_service
     ports:
       - "3308:3306"
+    expose:
+      - "3306"
     environment:
-      MYSQL_ROOT_PASSWORD: logistiktani
+      - MYSQL_ALLOW_EMPTY_PASSWORD=1
     volumes:
-      - logistik_tani_db:/var/lib/mysql
+      - db_data:/var/lib/mysql
+      - ./scripts:/docker-entrypoint-initdb.d
 
 volumes:
-  logistik_tani_db:
+  db_data:

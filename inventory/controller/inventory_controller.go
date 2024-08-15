@@ -2,11 +2,14 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/iniakunhuda/logistik-tani/inventory/model"
 	"github.com/iniakunhuda/logistik-tani/inventory/request"
 	"github.com/iniakunhuda/logistik-tani/inventory/service"
 	"github.com/iniakunhuda/logistik-tani/inventory/util"
@@ -23,7 +26,22 @@ func NewInventoryController(service service.InventoryService) *InventoryControll
 }
 
 func (controller *InventoryController) FindAll(w http.ResponseWriter, r *http.Request) {
-	dataResp, err := controller.inventoryService.FindAll()
+	userId := r.Header.Get("AuthUserID")
+	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
+
+	q := r.URL.Query()
+	jenis := q.Get("jenis")
+	if jenis != "" {
+		dataResp, err := controller.inventoryService.FindAll(&model.Produk{Jenis: jenis, IDUser: uint(userIdUint)})
+		if err != nil {
+			util.FormatResponseError(w, http.StatusInternalServerError, err)
+			return
+		}
+		util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+		return
+	}
+
+	dataResp, err := controller.inventoryService.FindAll(&model.Produk{IDUser: uint(userIdUint)})
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
@@ -33,26 +51,43 @@ func (controller *InventoryController) FindAll(w http.ResponseWriter, r *http.Re
 }
 
 func (controller *InventoryController) FindById(w http.ResponseWriter, r *http.Request) {
+	userId := r.Header.Get("AuthUserID")
+	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
+
 	params := mux.Vars(r)
-	userId := params["id"]
-	userIdInt, _ := strconv.Atoi(userId)
-	dataResp, err := controller.inventoryService.FindById(userIdInt)
+	productId := params["id"]
+	productIdInt, _ := strconv.Atoi(productId)
+	dataResp, err := controller.inventoryService.FindById(productIdInt)
 	if err != nil {
-		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		util.FormatResponseError(w, http.StatusNotFound, err)
 		return
 	}
+
+	if dataResp.IDUser != uint(userIdUint) {
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("Forbidden"))
+		return
+	}
+
 	util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
 }
 
 func (controller *InventoryController) Create(w http.ResponseWriter, r *http.Request) {
-	var userRequest request.CreateProdukRequest
+	userId := r.Header.Get("AuthUserID")
+	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
 
+	var userRequest request.CreateProdukRequest
 	err := json.NewDecoder(r.Body).Decode(&userRequest)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusBadRequest, err)
 		return
 	}
 	defer r.Body.Close()
+
+	// check user id
+	if userIdUint != uint64(userRequest.IDUser) {
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User not match"))
+		return
+	}
 
 	validate := validator.New()
 	err = validate.Struct(userRequest)
@@ -72,8 +107,10 @@ func (controller *InventoryController) Create(w http.ResponseWriter, r *http.Req
 }
 
 func (controller *InventoryController) Update(w http.ResponseWriter, r *http.Request) {
-	var userRequest request.UpdateUserRequest
+	userId := r.Header.Get("AuthUserID")
+	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
 
+	var userRequest request.UpdateProdukRequest
 	err := json.NewDecoder(r.Body).Decode(&userRequest)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusBadRequest, err)
@@ -82,10 +119,22 @@ func (controller *InventoryController) Update(w http.ResponseWriter, r *http.Req
 	defer r.Body.Close()
 
 	params := mux.Vars(r)
-	userId := params["id"]
-	userIdInt, _ := strconv.Atoi(userId)
+	productId := params["id"]
+	productIdInt, _ := strconv.Atoi(productId)
 
-	err = controller.inventoryService.Update(userIdInt, userRequest)
+	produkData, err := controller.inventoryService.FindById(productIdInt)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// check user id
+	if userIdUint != uint64(produkData.IDUser) {
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User not match"))
+		return
+	}
+
+	err = controller.inventoryService.Update(productIdInt, userRequest)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
@@ -95,12 +144,78 @@ func (controller *InventoryController) Update(w http.ResponseWriter, r *http.Req
 }
 
 func (controller *InventoryController) Delete(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	userId := params["id"]
-	userIdInt, _ := strconv.Atoi(userId)
+	userId := r.Header.Get("AuthUserID")
+	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
 
-	err := controller.inventoryService.Delete(userIdInt)
+	params := mux.Vars(r)
+	productId := params["id"]
+	productIdInt, _ := strconv.Atoi(productId)
+
+	produkData, err := controller.inventoryService.FindById(productIdInt)
 	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if userIdUint != uint64(produkData.IDUser) {
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User not match"))
+		return
+	}
+
+	err = controller.inventoryService.Delete(productIdInt)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, nil, nil)
+}
+
+func (controller *InventoryController) FindAllWithoutAuth(w http.ResponseWriter, r *http.Request) {
+	dataResp, err := controller.inventoryService.FindAll(&model.Produk{})
+	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+}
+
+func (controller *InventoryController) FindByIdWithoutAuth(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	productId := params["id"]
+	productIdInt, _ := strconv.Atoi(productId)
+	dataResp, err := controller.inventoryService.FindById(productIdInt)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusNotFound, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+}
+
+func (controller *InventoryController) UpdateReduceStock(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	productId := params["id"]
+	productIdInt, _ := strconv.Atoi(productId)
+
+	var requestBody request.UpdateStockProdukRequest
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+	defer r.Body.Close()
+
+	stokTerbaru, err := strconv.Atoi(requestBody.StokTerbaru)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	err = controller.inventoryService.UpdateReduceStock(productIdInt, stokTerbaru)
+	if err != nil {
+		fmt.Print(err)
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
 	}

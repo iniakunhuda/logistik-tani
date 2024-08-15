@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/iniakunhuda/logistik-tani/inventory/model"
 	"github.com/iniakunhuda/logistik-tani/inventory/repository"
@@ -11,17 +13,22 @@ import (
 type InventoryServiceImpl struct {
 	InventoryRepository repository.InventoryRepository
 	Validate            *validator.Validate
+	UserId              string
 }
 
 func NewInventoryServiceImpl(inventoryRepository repository.InventoryRepository, validate *validator.Validate) InventoryService {
 	return &InventoryServiceImpl{
 		InventoryRepository: inventoryRepository,
 		Validate:            validate,
+		// UserRemoteRepository: userRemoteRepository,
 	}
 }
 
-func (t *InventoryServiceImpl) Create(produk request.CreateProdukRequest) error {
+func (t *InventoryServiceImpl) SetUserId(userId string) {
+	t.UserId = userId
+}
 
+func (t *InventoryServiceImpl) Create(produk request.CreateProdukRequest) error {
 	produkModel := model.Produk{
 		IDUser:     produk.IDUser,
 		NamaProduk: produk.NamaProduk,
@@ -50,8 +57,8 @@ func (t *InventoryServiceImpl) Delete(produkId int) error {
 	return nil
 }
 
-func (t *InventoryServiceImpl) FindAll() ([]response.ProdukResponse, error) {
-	result, err := t.InventoryRepository.FindAll()
+func (t *InventoryServiceImpl) FindAll(produk *model.Produk) ([]response.ProdukResponse, error) {
+	result, err := t.InventoryRepository.GetAllByQuery(*produk)
 
 	if err != nil {
 		return nil, err
@@ -80,7 +87,7 @@ func (t *InventoryServiceImpl) FindById(produkId int) (response.ProdukResponse, 
 	return formatResponse, nil
 }
 
-func (t *InventoryServiceImpl) Update(produkId int, produk request.UpdateUserRequest) error {
+func (t *InventoryServiceImpl) Update(produkId int, produk request.UpdateProdukRequest) error {
 	produkData, err := t.InventoryRepository.FindById(produkId)
 	if err != nil {
 		return err
@@ -113,6 +120,22 @@ func (t *InventoryServiceImpl) Update(produkId int, produk request.UpdateUserReq
 		produkData.Status = produk.Status
 	}
 
+	t.InventoryRepository.Update(*produkData)
+
+	return nil
+}
+
+func (t *InventoryServiceImpl) UpdateReduceStock(produkId int, stokTerbaru int) error {
+	produkData, err := t.InventoryRepository.FindById(produkId)
+	if err != nil {
+		return err
+	}
+
+	if stokTerbaru > int(produkData.StokAktif) {
+		return errors.New("stok tidak mencukupi")
+	}
+
+	produkData.StokAktif = produkData.StokAktif - uint(stokTerbaru)
 	t.InventoryRepository.Update(*produkData)
 
 	return nil
