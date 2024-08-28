@@ -35,10 +35,9 @@ func (t *UserServiceImpl) Create(user request.CreateUserRequest) error {
 
 	userModel := model.User{
 		Name:         user.Name,
-		Username:     user.Email,
 		Email:        user.Email,
 		Password:     hashPassword,
-		Alamat:       user.Alamat,
+		Address:      user.Address,
 		Telp:         user.Telp,
 		Role:         user.Role,
 		Saldo:        user.Saldo,
@@ -106,8 +105,8 @@ func (t *UserServiceImpl) Update(userId int, user request.UpdateUserRequest) err
 	if user.Email != "" {
 		userData.Email = user.Email
 	}
-	if user.Alamat != "" {
-		userData.Alamat = user.Alamat
+	if user.Address != "" {
+		userData.Address = user.Address
 	}
 	if user.Telp != "" {
 		userData.Telp = user.Telp
