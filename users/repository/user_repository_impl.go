@@ -27,7 +27,7 @@ func (t *UserRepositoryImpl) Delete(userId int) error {
 
 func (t *UserRepositoryImpl) FindAll() (users []model.User, err error) {
 	var userList []model.User
-	result := t.Db.Find(&userList)
+	result := t.Db.Preload("Lands").Find(&userList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -36,7 +36,7 @@ func (t *UserRepositoryImpl) FindAll() (users []model.User, err error) {
 
 func (t *UserRepositoryImpl) FindById(userId int) (*model.User, error) {
 	var userResult model.User
-	result := t.Db.Find(&userResult, userId)
+	result := t.Db.Preload("Lands").Find(&userResult, userId)
 	if result.Error != nil {
 		return nil, result.Error
 	}

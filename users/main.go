@@ -55,7 +55,11 @@ func main() {
 	userController := controller.NewUserController(userService)
 	authController := controller.NewAuthController(userService)
 
-	routes := router.NewRouter(userController, authController)
+	userLandRepository := repository.NewUserLandRepositoryImpl(db)
+	userLandService := service.NewUserLandServiceImpl(userLandRepository, validate)
+	userLandController := controller.NewUserLandController(userLandService)
+
+	routes := router.NewRouter(userController, authController, userLandController)
 	srv := &http.Server{
 		Addr:         serverURI,
 		ErrorLog:     errLog,
