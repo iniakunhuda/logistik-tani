@@ -7,6 +7,7 @@ CREATE TABLE crmtani_sales.sales_detail (
     qty INT  NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     subtotal DECIMAL(10, 2) NOT NULL,
+    note TEXT NULL,
     FOREIGN KEY (id_sales) REFERENCES crmtani_sales.sales(id)
 );
 -- +goose StatementEnd
