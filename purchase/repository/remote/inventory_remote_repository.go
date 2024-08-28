@@ -3,8 +3,10 @@ package remote
 import "github.com/iniakunhuda/logistik-tani/purchase/response"
 
 type InventoryRemoteRepository interface {
-	GetDetail(id string) (response.ProdukResponse, error)
+	GetAll() ([]response.ProductResponse, error)
+	GetDetail(id string) (response.ProductResponse, error)
+	UpdateReduceStok(id string, stok string) error
 	UpdateIncreaseStok(id string, stok string) error
 
-	PostCreatePetani(produk response.ProdukResponse, qty uint, idPembeli uint) error
+	AutoCreateProdukPetani(produk response.ProductResponse, qty uint, idPembeli uint) error
 }

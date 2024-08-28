@@ -63,7 +63,7 @@ func (t *PurchaseRepositoryImpl) Save(purchase model.Purchase, purchasesDetail [
 
 		// Insert the PurchaseDetail records
 		for i := range purchasesDetail {
-			purchasesDetail[i].IDPurchase = purchase.ID
+			purchasesDetail[i].IDPurchase = int(purchase.ID)
 		}
 		if err := tx.Create(&purchasesDetail).Error; err != nil {
 			return err // Return error to rollback

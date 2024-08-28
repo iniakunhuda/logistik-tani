@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/iniakunhuda/logistik-tani/inventory/model"
@@ -207,8 +206,6 @@ func (t *ProductServiceImpl) AutoCreateProductPetani(request request.CreateProdu
 	// check if product name exists, if exists fetch the product
 	productDb, _ := t.ProductRepository.FindByName(request.Name)
 
-	fmt.Println("EAAAA", request.ID)
-
 	// if productdb nil, create new product
 	if productDb == nil {
 		newProductDb := model.Product{
@@ -231,10 +228,7 @@ func (t *ProductServiceImpl) AutoCreateProductPetani(request request.CreateProdu
 	}
 
 	// create product owner
-	productOwnerDb, err := t.ProductOwnerRepository.GetOneByQuery(model.ProductOwner{IDProduct: int(productDb.ID), IDUser: int(request.IDUser)})
-	if err != nil {
-		return errors.New("Product Owner already exists")
-	}
+	productOwnerDb, _ := t.ProductOwnerRepository.GetOneByQuery(model.ProductOwner{IDProduct: int(productDb.ID), IDUser: int(request.IDUser)})
 
 	if productOwnerDb != (model.ProductOwner{}) {
 		productOwnerDb.Stock = productOwnerDb.Stock + request.Stock

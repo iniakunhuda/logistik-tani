@@ -32,14 +32,11 @@ func NewInventoryServiceImpl(purchasesRepository repository.PurchaseRepository, 
 }
 
 func (t *InventoryServiceImpl) GenerateNoInvoice() (string, error) {
-	purchases, err := t.PurchaseRepository.FindLastRow()
-	if err != nil {
-		return "", err
-	}
+	sales, err := t.PurchaseRepository.FindLastRow()
 
 	lastInv := 0
-	if purchases != nil {
-		parts := strings.Split(purchases.NoInvoice, "-")
+	if sales != nil {
+		parts := strings.Split(sales.NoInvoice, "-")
 		if len(parts) == 2 {
 			lastInv, err = strconv.Atoi(parts[1])
 			if err != nil {
@@ -50,11 +47,11 @@ func (t *InventoryServiceImpl) GenerateNoInvoice() (string, error) {
 
 	noInv := ""
 	if lastInv+1 < 10 {
-		noInv = fmt.Sprintf("PURCHASE-000%d", lastInv+1)
+		noInv = fmt.Sprintf("SALES-000%d", lastInv+1)
 	} else if lastInv+1 < 100 {
-		noInv = fmt.Sprintf("PURCHASE-00%d", lastInv+1)
+		noInv = fmt.Sprintf("SALES-00%d", lastInv+1)
 	} else if lastInv+1 < 1000 {
-		noInv = fmt.Sprintf("PURCHASE-0%d", lastInv+1)
+		noInv = fmt.Sprintf("SALES-0%d", lastInv+1)
 	}
 
 	return noInv, nil
@@ -69,53 +66,55 @@ func (t *InventoryServiceImpl) Create(purchase request.CreatePurchaseRequest) er
 	totalHargaPurchase := 0
 	purchaseModel := model.Purchase{
 		NoInvoice:     noInv,
-		IDPembeli:     purchase.IDPembeli,
-		IDPenjual:     purchase.IDPenjual,
-		NamaPenjual:   purchase.NamaPenjual,
-		AlamatPenjual: purchase.AlamatPenjual,
-		TelpPenjual:   purchase.TelpPenjual,
-		Tanggal:       purchase.Tanggal,
+		IDBuyer:       int(purchase.IDBuyer),
+		IDSeller:      purchase.IDSeller,
+		SellerName:    purchase.SellerName,
+		SellerAddress: purchase.SellerAddress,
+		SellerTelp:    purchase.SellerTelp,
+		PurchaseDate:  purchase.PurchaseDate,
 		Status:        "open",
-		TotalHarga:    0,
+		TotalPrice:    0,
 	}
 
-	_, err = t.UserRemoteRepository.Find(strconv.Itoa(int(purchase.IDPembeli)))
+	// jcart, _ := json.Marshal(purchaseModel)
+	// fmt.Println(string(jcart))
+
+	_, err = t.UserRemoteRepository.Find(strconv.Itoa(int(purchase.IDBuyer)))
 	if err != nil {
 		return err
 	}
 
 	purchaseDetailModel := []model.PurchaseDetail{}
-	for _, value := range purchase.Produk {
+	for _, value := range purchase.Products {
 
 		// Inventory Service: Check product stok
-		inventoryDetail, err := t.InventoryRemoteRepository.GetDetail(strconv.Itoa(int(value.IDProduk)))
+		inventoryDetail, err := t.InventoryRemoteRepository.GetDetail(strconv.Itoa(int(value.IDProduct)))
 		if err != nil {
 			return err
 		}
 
 		// Check produk.userId != inventory
-		if inventoryDetail.IDUser != purchase.IDPembeli {
+		if inventoryDetail.IDUser != purchase.IDBuyer {
 			return errors.New("Error! Produk tidak ditemukan")
 		}
 
 		purchaseDetailModel = append(purchaseDetailModel, model.PurchaseDetail{
-			IDProduk:   value.IDProduk,
-			Jenis:      value.Jenis,
-			Harga:      int(value.Harga),
-			Qty:        int(value.Qty),
-			TotalHarga: int(value.Harga) * int(value.Qty),
+			IDProductOwner: int(value.IDProduct),
+			Price:          float64(value.Price),
+			Qty:            int(value.Qty),
+			Subtotal:       float64(value.Price) * float64(value.Qty),
 		})
 
 		// Inventory Service: Trigger stok update
-		err = t.InventoryRemoteRepository.UpdateIncreaseStok(strconv.Itoa(int(value.IDProduk)), strconv.Itoa(int(value.Qty)))
+		err = t.InventoryRemoteRepository.UpdateIncreaseStok(strconv.Itoa(int(value.IDProduct)), strconv.Itoa(int(value.Qty)))
 		if err != nil {
 			return err
 		}
 
-		totalHargaPurchase += int(value.Harga) * int(value.Qty)
+		totalHargaPurchase += int(value.Price) * int(value.Qty)
 	}
 
-	purchaseModel.TotalHarga = totalHargaPurchase
+	purchaseModel.TotalPrice = float64(totalHargaPurchase)
 	err = t.PurchaseRepository.Save(purchaseModel, purchaseDetailModel)
 	if err != nil {
 		return err
@@ -126,7 +125,7 @@ func (t *InventoryServiceImpl) Create(purchase request.CreatePurchaseRequest) er
 
 func (t *InventoryServiceImpl) Update(purchaseId int, userId int, purchases request.UpdatePurchaseRequest) error {
 	// Validate the request
-	purchasesData, err := t.PurchaseRepository.GetOneByQuery(model.Purchase{IDPembeli: uint(userId), ID: uint(purchaseId)})
+	purchasesData, err := t.PurchaseRepository.GetOneByQuery(model.Purchase{IDBuyer: int(userId), ID: uint(purchaseId)})
 	if err != nil {
 		return err
 	}
@@ -182,16 +181,34 @@ func (t *InventoryServiceImpl) FindAll(purchase *model.Purchase) ([]response.Pur
 		listUser[value.ID] = value
 	}
 
+	// get list of products
+	products, err := t.InventoryRemoteRepository.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	listProducts := map[uint]response.ProductResponse{}
+	for _, value := range products {
+		listProducts[value.ID] = value
+	}
+
 	var purchases []response.PurchaseResponse
 	for _, value := range result {
+		// get product detail
+		var purchaseDetail = value.PurchaseDetail
+		for i, purchaseDetailItem := range purchaseDetail {
+			productDetail := listProducts[uint(purchaseDetailItem.IDProductOwner)]
+			purchaseDetail[i].Name = productDetail.Name
+			purchaseDetail[i].Description = productDetail.Description
+		}
+		value.PurchaseDetail = purchaseDetail
+
 		newPurchaseDetail := response.PurchaseResponse{
 			Purchase:      value,
-			IDPenjual:     value.IDPenjual,
-			NamaPenjual:   value.NamaPenjual,
-			AlamatPenjual: value.AlamatPenjual,
-			TelpPenjual:   value.AlamatPenjual,
-			// PenjualDetail: listUser[value.IDPenjual],
-			PembeliDetail: listUser[value.IDPembeli],
+			IDSeller:      uint(value.IDSeller),
+			SellerName:    value.SellerName,
+			SellerAddress: value.SellerAddress,
+			SellerTelp:    value.SellerTelp,
+			BuyerDetail:   listUser[uint(value.IDBuyer)],
 		}
 		purchases = append(purchases, newPurchaseDetail)
 	}
@@ -200,7 +217,7 @@ func (t *InventoryServiceImpl) FindAll(purchase *model.Purchase) ([]response.Pur
 }
 
 func (t *InventoryServiceImpl) FindById(purchaseId int, userId uint) (response.PurchaseResponse, error) {
-	purchaseData, err := t.PurchaseRepository.GetOneByQuery(model.Purchase{IDPembeli: userId, ID: uint(purchaseId)})
+	purchaseData, err := t.PurchaseRepository.GetOneByQuery(model.Purchase{IDBuyer: int(userId), ID: uint(purchaseId)})
 	if err != nil {
 		return response.PurchaseResponse{}, err
 	}
@@ -215,14 +232,32 @@ func (t *InventoryServiceImpl) FindById(purchaseId int, userId uint) (response.P
 		listUser[value.ID] = value
 	}
 
+	// get list of products
+	products, err := t.InventoryRemoteRepository.GetAll()
+	if err != nil {
+		return response.PurchaseResponse{}, err
+	}
+	listProducts := map[uint]response.ProductResponse{}
+	for _, value := range products {
+		listProducts[value.ID] = value
+	}
+
+	// get product detail
+	var purchaseDetail = purchaseData.PurchaseDetail
+	for i, purchaseDetailItem := range purchaseDetail {
+		productDetail := listProducts[uint(purchaseDetailItem.IDProductOwner)]
+		purchaseDetail[i].Name = productDetail.Name
+		purchaseDetail[i].Description = productDetail.Description
+	}
+	purchaseData.PurchaseDetail = purchaseDetail
+
 	formatResponse := response.PurchaseResponse{
 		Purchase:      purchaseData,
-		IDPenjual:     purchaseData.IDPenjual,
-		NamaPenjual:   purchaseData.NamaPenjual,
-		AlamatPenjual: purchaseData.AlamatPenjual,
-		TelpPenjual:   purchaseData.AlamatPenjual,
-		// PenjualDetail: listUser[purchaseData.IDPenjual],
-		PembeliDetail: listUser[purchaseData.IDPembeli],
+		IDSeller:      uint(purchaseData.IDSeller),
+		SellerName:    purchaseData.SellerName,
+		SellerAddress: purchaseData.SellerAddress,
+		SellerTelp:    purchaseData.SellerTelp,
+		BuyerDetail:   listUser[uint(purchaseData.IDBuyer)],
 	}
 	return formatResponse, nil
 }

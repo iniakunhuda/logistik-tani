@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -203,8 +202,6 @@ func (t *InventoryServiceImpl) FindAll(sale *model.Sales) ([]response.SalesRespo
 	for _, value := range products {
 		listProducts[value.ID] = value
 	}
-	jcart, _ := json.Marshal(products)
-	fmt.Println(string(jcart))
 
 	var sales []response.SalesResponse
 	for _, value := range result {
@@ -216,12 +213,12 @@ func (t *InventoryServiceImpl) FindAll(sale *model.Sales) ([]response.SalesRespo
 			salesDetail[i].Name = productDetail.Name
 			salesDetail[i].Description = productDetail.Description
 		}
-
 		value.SalesDetail = salesDetail
+
 		newSalesDetail := response.SalesResponse{
-			Sales:         value,
-			PenjualDetail: listUser[uint(value.IDSeller)],
-			PembeliDetail: listUser[uint(value.IDBuyer)],
+			Sales:        value,
+			SellerDetail: listUser[uint(value.IDSeller)],
+			BuyerDetail:  listUser[uint(value.IDBuyer)],
 		}
 		sales = append(sales, newSalesDetail)
 	}
@@ -245,10 +242,29 @@ func (t *InventoryServiceImpl) FindById(salesId int, userId int) (response.Sales
 		listUser[value.ID] = value
 	}
 
+	// get list of products
+	products, err := t.InventoryRemoteRepository.GetAll()
+	if err != nil {
+		return response.SalesResponse{}, err
+	}
+	listProducts := map[uint]response.ProductResponse{}
+	for _, value := range products {
+		listProducts[value.ID] = value
+	}
+
+	// get product detail
+	var salesDetail = salesData.SalesDetail
+	for i, salesDetailItem := range salesDetail {
+		productDetail := listProducts[uint(salesDetailItem.IDProductOwner)]
+		salesDetail[i].Name = productDetail.Name
+		salesDetail[i].Description = productDetail.Description
+	}
+	salesData.SalesDetail = salesDetail
+
 	formatResponse := response.SalesResponse{
-		Sales:         salesData,
-		PenjualDetail: listUser[uint(salesData.IDSeller)],
-		PembeliDetail: listUser[uint(salesData.IDBuyer)],
+		Sales:        salesData,
+		SellerDetail: listUser[uint(salesData.IDSeller)],
+		BuyerDetail:  listUser[uint(salesData.IDBuyer)],
 	}
 	return formatResponse, nil
 }
