@@ -7,18 +7,15 @@ import (
 type Purchase struct {
 	ID             uint                  `gorm:"primaryKey;autoIncrement" json:"id"`
 	NoInvoice      string                `gorm:"type:varchar(255);not null" json:"no_invoice" validate:"required"`
-	IDPenjual      uint                  `gorm:"type:uint;not null" json:"id_penjual"`
-	NamaPenjual    string                `gorm:"type:varchar(255);not null" json:"nama_penjual"`
-	AlamatPenjual  string                `gorm:"type:varchar(255);not null" json:"alamat_penjual"`
-	TelpPenjual    string                `gorm:"type:varchar(255);not null" json:"telp_penjual"`
-	IDPembeli      uint                  `gorm:"type:uint;not null" json:"id_pembeli" validate:"required"`
-	TotalHarga     int                   `gorm:"type:int;not null" json:"total_harga" validate:"required"`
-	Tanggal        time.Time             `gorm:"type:date;not null" json:"tanggal" validate:"required"`
+	IDSeller       int                   `gorm:"type:int;" json:"id_seller"`
+	SellerName     string                `gorm:"type:varchar(255);not null" json:"seller_name"`
+	SellerAddress  string                `gorm:"type:varchar(255);not null" json:"seller_address"`
+	SellerTelp     string                `gorm:"type:varchar(255);not null" json:"seller_telp"`
+	IDBuyer        int                   `gorm:"type:int;not null" json:"id_buyer" validate:"required"`
+	TotalPrice     float64                   `gorm:"type:decimal(10,2);not null" json:"total_price" validate:"required"`
+	PurchaseDate   time.Time             `gorm:"type:date;not null" json:"purchase_date" validate:"required"`
 	Status         string                `gorm:"type:enum('open','pending','done', 'cancel');not null" json:"status" validate:"required"`
 	PurchaseDetail []PurchaseDetailDatum `gorm:"foreignKey:IDPurchase;references:ID" json:"products"`
-
-	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
 
 type PurchaseDetailDatum struct {

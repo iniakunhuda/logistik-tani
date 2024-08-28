@@ -1,4 +1,6 @@
-// {
+{
+    "editor.fontSize": 15
+} // {
 //     "window.zoomLevel": 0,
 //     "diffEditor.ignoreTrimWhitespace": false,
 //     "workbench.activityBar.visible": true,

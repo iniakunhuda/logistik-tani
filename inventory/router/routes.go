@@ -6,24 +6,23 @@ import (
 	"github.com/iniakunhuda/logistik-tani/inventory/util"
 )
 
-func NewRouter(inventoryController *controller.InventoryController, inventoryPetaniController *controller.InventoryPetaniController) *mux.Router {
+func NewRouter(productController *controller.ProductController, productPetaniController *controller.ProductPetaniController) *mux.Router {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/api/inventory/all", inventoryController.FindAllWithoutAuth).Methods("GET")
-	r.HandleFunc("/api/inventory/all/detail/{id}", inventoryController.FindByIdWithoutAuth).Methods("GET")
-	r.HandleFunc("/api/inventory/all/update_reduce_stock/{id}", inventoryController.UpdateReduceStock).Methods("PUT")
-	r.HandleFunc("/api/inventory/all/update_increase_stock/{id}", inventoryController.UpdateIncreaseStock).Methods("PUT")
+	r.HandleFunc("/api/inventory/all", productController.FindAllWithoutAuth).Methods("GET")
+	r.HandleFunc("/api/inventory/all/detail/{id}", productController.FindByIdWithoutAuth).Methods("GET")
+	r.HandleFunc("/api/inventory/all/update_reduce_stock/{id}", productController.UpdateReduceStock).Methods("PUT")
+	r.HandleFunc("/api/inventory/all/update_increase_stock/{id}", productController.UpdateIncreaseStock).Methods("PUT")
 
 	inventory := r.PathPrefix("/api/inventory").Subrouter()
 	inventory.Use(util.AuthVerify)
-	inventory.HandleFunc("", inventoryController.FindAll).Methods("GET")
-	inventory.HandleFunc("/{id}", inventoryController.FindById).Methods("GET")
-	inventory.HandleFunc("", inventoryController.Create).Methods("POST")
-	inventory.HandleFunc("/{id}", inventoryController.Update).Methods("PUT")
-	inventory.HandleFunc("/{id}", inventoryController.Delete).Methods("DELETE")
+	inventory.HandleFunc("", productController.FindAll).Methods("GET")
+	inventory.HandleFunc("/{id}", productController.FindById).Methods("GET")
+	inventory.HandleFunc("", productController.Create).Methods("POST")
+	inventory.HandleFunc("/{id}", productController.Update).Methods("PUT")
 
 	inventoryPetani := r.PathPrefix("/api/inventory/petani").Subrouter()
-	inventoryPetani.HandleFunc("", inventoryPetaniController.Create).Methods("POST")
+	inventoryPetani.HandleFunc("", productPetaniController.Create).Methods("POST")
 
 	return r
 }

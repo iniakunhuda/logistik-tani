@@ -1,12 +1,19 @@
+Inventory Services
+- [v] Produk
+- [v] Update stok
+
 Sales Services
-
-- [v] Create
-- [ ] Update Status aja
-- [v] Order ke petani, create inventory_petani
-
+- List produk yg dimiliki user
+- CRUD Biasa
+- Update stok berkurang
 
 Purchase
+- List produk yang dimiliki user
+- CRUD Biasa
+- Update stok bertambah
 
-- [ ] Create
-- [ ] Update
+
+IGM
+- Beli laporan petani
+
 

@@ -63,7 +63,7 @@ func (t *SalesRepositoryImpl) Save(sale model.Sales, salesDetail []model.SalesDe
 
 		// Insert the SalesDetail records
 		for i := range salesDetail {
-			salesDetail[i].IDSales = sale.ID
+			salesDetail[i].IDSales = int(sale.ID)
 		}
 		if err := tx.Create(&salesDetail).Error; err != nil {
 			return err // Return error to rollback

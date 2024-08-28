@@ -3,18 +3,16 @@ package request
 import "time"
 
 type CreateSalesRequest struct {
-	IDPenjual uint                     `json:"id_penjual" validate:"required"` // ID pembibit
-	IDPembeli uint                     `json:"id_pembeli" validate:"required"` // ID petani
-	Status    string                   `json:"status" validate:"required"`
-	Produk    []CreateSalesItemRequest `json:"produk" validate:"required"`
-	Tanggal   time.Time                `json:"tanggal" validate:"required"`
+	IDSeller  int                      `json:"id_seller" validate:"required"` // ID pembibit
+	IDBuyer   int                      `json:"id_buyer" validate:"required"`  // ID petani
+	Products  []CreateSalesItemRequest `json:"products" validate:"required"`
+	SalesDate time.Time                `json:"sales_date" validate:"required"`
 }
 
 type CreateSalesItemRequest struct {
-	IDProduk uint      `json:"id_produk" validate:"required"`
-	Jenis    string    `json:"jenis" validate:"required"`
-	Harga    uint      `json:"harga" validate:"required"`
-	Qty      uint      `json:"qty" validate:"required"`
-	Tanggal  time.Time `json:"tanggal" validate:"required"`
-	Catatan  string    `json:"catatan"`
+	IDProduct int    `json:"id_product" validate:"required"`
+	Category  string `json:"category" validate:"required"`
+	Price     int    `json:"price" validate:"required"`
+	Qty       int    `json:"qty" validate:"required"`
+	Catatan   string `json:"catatan"`
 }

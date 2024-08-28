@@ -26,9 +26,8 @@ func NewPurchaseController(service service.PurchaseService) *PurchaseController 
 
 func (controller *PurchaseController) FindAll(w http.ResponseWriter, r *http.Request) {
 	userId := r.Header.Get("AuthUserID")
-	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
-
-	dataResp, err := controller.purchaseService.FindAll(&model.Purchase{IDPembeli: uint(userIdUint)})
+	userIdInt, _ := strconv.Atoi(userId)
+	dataResp, err := controller.purchaseService.FindAll(&model.Purchase{IDBuyer: userIdInt})
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
@@ -39,12 +38,12 @@ func (controller *PurchaseController) FindAll(w http.ResponseWriter, r *http.Req
 
 func (controller *PurchaseController) FindById(w http.ResponseWriter, r *http.Request) {
 	userId := r.Header.Get("AuthUserID")
-	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
+	userIdInt, _ := strconv.Atoi(userId)
 
 	params := mux.Vars(r)
 	purchaseId := params["id"]
 	purchaseIdInt, _ := strconv.Atoi(purchaseId)
-	dataResp, err := controller.purchaseService.FindById(purchaseIdInt, uint(userIdUint))
+	dataResp, err := controller.purchaseService.FindById(purchaseIdInt, uint(userIdInt))
 	if err != nil {
 		util.FormatResponseError(w, http.StatusNotFound, err)
 		return
@@ -64,7 +63,7 @@ func (controller *PurchaseController) Create(w http.ResponseWriter, r *http.Requ
 	}
 	defer r.Body.Close()
 
-	if userRequest.IDPembeli != uint(userIdUint) {
+	if userRequest.IDBuyer != uint(userIdUint) {
 		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User tidak sama"))
 		return
 	}
@@ -89,7 +88,7 @@ func (controller *PurchaseController) Create(w http.ResponseWriter, r *http.Requ
 func (controller *PurchaseController) Update(w http.ResponseWriter, r *http.Request) {
 	util.FormatResponseError(w, http.StatusNotFound, errors.New("Pembelian tidak dapat dihapus"))
 	return
-	
+
 	// TODO: only can update status based user login
 	util.FormatResponseSuccess(w, http.StatusOK, nil, nil)
 }
@@ -111,7 +110,7 @@ func (controller *PurchaseController) Delete(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if dataResp.IDPembeli != uint(userIdUint) {
+	if uint(dataResp.IDBuyer) != uint(userIdUint) {
 		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User tidak sama"))
 		return
 	}

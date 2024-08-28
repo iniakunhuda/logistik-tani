@@ -7,7 +7,7 @@ import (
 type SalesIgm struct {
 	ID            uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 	NoInvoice     string    `gorm:"type:varchar(100);not null" json:"no_invoice" validate:"required"`
-	IDPenjual     int       `gorm:"type:int;not null" json:"id_penjual" validate:"required"`
+	IDSeller      int       `gorm:"type:int;not null" json:"id_seller" validate:"required"`
 	NamaPembeli   string    `gorm:"type:varchar(255);not null" json:"nama_pembeli" validate:"required"`
 	AlamatPembeli string    `gorm:"type:varchar(255);not null" json:"alamat_pembeli" validate:"required"`
 	TelpPembeli   string    `gorm:"type:varchar(20);not null" json:"telp_pembeli" validate:"required"`
