@@ -9,6 +9,7 @@ type SalesDetail struct {
 	Subtotal       float64 `gorm:"type:decimal(10,2);not null" json:"subtotal" validate:"required"`
 	Name           string  `gorm:"-" json:"name"`
 	Description    string  `gorm:"-" json:"description"`
+	Note           string  `gorm:"type:text" json:"note"`
 }
 
 func (SalesDetail) TableName() string {

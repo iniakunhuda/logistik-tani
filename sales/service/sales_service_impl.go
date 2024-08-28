@@ -14,7 +14,7 @@ import (
 	"github.com/iniakunhuda/logistik-tani/sales/response"
 )
 
-type InventoryServiceImpl struct {
+type SalesServiceImpl struct {
 	TokenAuth                 string
 	SalesRepository           repository.SalesRepository
 	UserRemoteRepository      remote.UserRemoteRepository
@@ -22,8 +22,8 @@ type InventoryServiceImpl struct {
 	Validate                  *validator.Validate
 }
 
-func NewInventoryServiceImpl(salesRepository repository.SalesRepository, validate *validator.Validate) SalesService {
-	return &InventoryServiceImpl{
+func NewSalesServiceImpl(salesRepository repository.SalesRepository, validate *validator.Validate) SalesService {
+	return &SalesServiceImpl{
 		SalesRepository:           salesRepository,
 		UserRemoteRepository:      remote.NewUserRemoteRepositoryImpl(),
 		InventoryRemoteRepository: remote.NewInventoryRemoteRepositoryImpl(""), // TODO: set bearer token
@@ -31,11 +31,8 @@ func NewInventoryServiceImpl(salesRepository repository.SalesRepository, validat
 	}
 }
 
-func (t *InventoryServiceImpl) GenerateNoInvoice() (string, error) {
+func (t *SalesServiceImpl) GenerateNoInvoice() (string, error) {
 	sales, err := t.SalesRepository.FindLastRow()
-	if err != nil {
-		return "", err
-	}
 
 	lastInv := 0
 	if sales != nil {
@@ -60,7 +57,7 @@ func (t *InventoryServiceImpl) GenerateNoInvoice() (string, error) {
 	return noInv, nil
 }
 
-func (t *InventoryServiceImpl) Create(sales request.CreateSalesRequest) error {
+func (t *SalesServiceImpl) Create(sales request.CreateSalesRequest) error {
 
 	noInv, err := t.GenerateNoInvoice()
 	if err != nil {
@@ -107,6 +104,7 @@ func (t *InventoryServiceImpl) Create(sales request.CreateSalesRequest) error {
 			Price:          float64(value.Price),
 			Qty:            int(value.Qty),
 			Subtotal:       float64(value.Price) * float64(value.Qty),
+			Note:           value.Catatan,
 		})
 
 		// Inventory Service: Trigger stok update
@@ -135,7 +133,7 @@ func (t *InventoryServiceImpl) Create(sales request.CreateSalesRequest) error {
 	return nil
 }
 
-func (t *InventoryServiceImpl) Update(saleId int, userId int, sales request.UpdateSalesRequest) error {
+func (t *SalesServiceImpl) Update(saleId int, userId int, sales request.UpdateSalesRequest) error {
 	// Validate the request
 	salesData, err := t.SalesRepository.GetOneByQuery(model.Sales{IDSeller: userId, ID: uint(saleId)})
 	if err != nil {
@@ -168,7 +166,7 @@ func (t *InventoryServiceImpl) Update(saleId int, userId int, sales request.Upda
 	return nil
 }
 
-func (t *InventoryServiceImpl) Delete(salesId int) error {
+func (t *SalesServiceImpl) Delete(salesId int) error {
 	err := t.SalesRepository.Delete(salesId)
 	if err != nil {
 		return err
@@ -176,7 +174,7 @@ func (t *InventoryServiceImpl) Delete(salesId int) error {
 	return nil
 }
 
-func (t *InventoryServiceImpl) FindAll(sale *model.Sales) ([]response.SalesResponse, error) {
+func (t *SalesServiceImpl) FindAll(sale *model.Sales) ([]response.SalesResponse, error) {
 	result, err := t.SalesRepository.GetAllByQuery(*sale)
 
 	if err != nil {
@@ -226,7 +224,7 @@ func (t *InventoryServiceImpl) FindAll(sale *model.Sales) ([]response.SalesRespo
 	return sales, nil
 }
 
-func (t *InventoryServiceImpl) FindById(salesId int, userId int) (response.SalesResponse, error) {
+func (t *SalesServiceImpl) FindById(salesId int, userId int) (response.SalesResponse, error) {
 	salesData, err := t.SalesRepository.GetOneByQuery(model.Sales{IDSeller: userId, ID: uint(salesId)})
 	if err != nil {
 		return response.SalesResponse{}, err
