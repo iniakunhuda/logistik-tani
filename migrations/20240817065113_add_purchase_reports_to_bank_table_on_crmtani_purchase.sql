@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE crmtani_purchase.purchase_reports_to_bank (
-    id INT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     date_start DATE,
     date_end DATE,
     note TEXT,

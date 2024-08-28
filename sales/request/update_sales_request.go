@@ -1,6 +1,6 @@
 package request
 
 type UpdateSalesRequest struct {
-	IDPenjual uint   `json:"id_penjual" validate:"required"` // ID pembibit
-	Status    string `json:"status" validate:"required"`
+	IDSeller uint   `json:"id_seller" validate:"required"`
+	Status   string `json:"status" validate:"required"`
 }

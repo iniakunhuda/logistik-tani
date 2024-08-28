@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE crmtani_purchase.purchase_igm_detail (
-    id INT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     id_purchase_igm INT NOT NULL,
     id_production INT NOT NULL,
     total_kg DECIMAL(10, 2) NOT NULL,

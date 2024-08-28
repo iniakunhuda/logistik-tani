@@ -42,13 +42,6 @@ func (t *UserServiceImpl) Create(user request.CreateUserRequest) error {
 		Telp:         user.Telp,
 		Role:         user.Role,
 		Saldo:        user.Saldo,
-		// LastLogin:    "",
-		AlamatKebun:  user.AlamatKebun,
-		TotalObat:    user.TotalObat,
-		TotalPupuk:   user.TotalPupuk,
-		TotalBibit:   user.TotalBibit,
-		TotalTebu:    user.TotalTebu,
-		LuasLahan:    user.LuasLahan,
 		Token:        nil,
 		TokenExpired: nil,
 	}
@@ -129,24 +122,6 @@ func (t *UserServiceImpl) Update(userId int, user request.UpdateUserRequest) err
 	// if user.LastLogin != "" {
 	// 	userData.LastLogin = user.LastLogin
 	// }
-	if user.AlamatKebun != "" {
-		userData.AlamatKebun = user.AlamatKebun
-	}
-	if user.TotalObat != 0 {
-		userData.TotalObat = user.TotalObat
-	}
-	if user.TotalPupuk != 0 {
-		userData.TotalPupuk = user.TotalPupuk
-	}
-	if user.TotalBibit != 0 {
-		userData.TotalBibit = user.TotalBibit
-	}
-	if user.TotalTebu != 0 {
-		userData.TotalTebu = user.TotalTebu
-	}
-	if user.LuasLahan != 0 {
-		userData.LuasLahan = user.LuasLahan
-	}
 
 	if user.Token != nil {
 		userData.Token = user.Token

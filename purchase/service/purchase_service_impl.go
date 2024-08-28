@@ -95,7 +95,7 @@ func (t *InventoryServiceImpl) Create(purchase request.CreatePurchaseRequest) er
 
 		// Check produk.userId != inventory
 		if inventoryDetail.IDUser != purchase.IDPembeli {
-			return errors.New("produk bukan milik user")
+			return errors.New("Error! Produk tidak ditemukan")
 		}
 
 		purchaseDetailModel = append(purchaseDetailModel, model.PurchaseDetail{

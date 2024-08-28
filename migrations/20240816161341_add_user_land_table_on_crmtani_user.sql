@@ -10,7 +10,7 @@ CREATE TABLE crmtani_user.user_land (
     total_pupuk DECIMAL(10, 2) NOT NULL,
     total_bibit DECIMAL(10, 2) NOT NULL,
     total_tebu DECIMAL(10, 2) NOT NULL,
-    FOREIGN KEY (id_user) REFERENCES crmtani_user.user(id)
+    FOREIGN KEY (id_user) REFERENCES crmtani_user.users(id)
 );
 -- +goose StatementEnd
 

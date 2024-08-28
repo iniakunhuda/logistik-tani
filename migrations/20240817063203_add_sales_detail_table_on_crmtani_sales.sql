@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE crmtani_sales.sales_detail (
-    id INT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     id_sales INT NOT NULL,
     id_product_owner INT NOT NULL,
     qty INT  NOT NULL,

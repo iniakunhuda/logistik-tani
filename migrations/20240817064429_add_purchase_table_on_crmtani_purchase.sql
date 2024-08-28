@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE crmtani_purchase.purchase (
-    id INT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     no_invoice VARCHAR(50),
     id_seller INT NOT NULL,
     id_buyer INT NULL,

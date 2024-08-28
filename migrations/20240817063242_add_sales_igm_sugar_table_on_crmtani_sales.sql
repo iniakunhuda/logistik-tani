@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE crmtani_sales.sales_igm_sugar (
-    id INT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     no_invoice VARCHAR(50),
     product_name VARCHAR(100) NOT NULL,
     id_seller INT NOT NULL,

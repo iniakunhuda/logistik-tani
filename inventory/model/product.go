@@ -6,19 +6,19 @@ import (
 	"gorm.io/gorm"
 )
 
-type ProdukModel struct {
+type ProductModel struct {
 	DB *gorm.DB
 }
 
 // All method will be used to get all records from produks table
-func (m *ProdukModel) All() ([]Produk, error) {
-	var produks []Produk
+func (m *ProductModel) All() ([]Product, error) {
+	var produks []Product
 	result := m.DB.Find(&produks)
 	return produks, result.Error
 }
 
-func (m *ProdukModel) FindByID(id uint) (*Produk, error) {
-	var produk Produk
+func (m *ProductModel) FindByID(id uint) (*Product, error) {
+	var produk Product
 	result := m.DB.First(&produk, id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -29,7 +29,7 @@ func (m *ProdukModel) FindByID(id uint) (*Produk, error) {
 	return &produk, nil
 }
 
-func (m *ProdukModel) Insert(produk Produk) (*Produk, error) {
+func (m *ProductModel) Insert(produk Product) (*Product, error) {
 	result := m.DB.Create(&produk)
 	if result.Error != nil {
 		return nil, result.Error
@@ -37,13 +37,13 @@ func (m *ProdukModel) Insert(produk Produk) (*Produk, error) {
 	return &produk, nil
 }
 
-func (m *ProdukModel) Delete(id uint) error {
-	result := m.DB.Delete(&Produk{}, id)
+func (m *ProductModel) Delete(id uint) error {
+	result := m.DB.Delete(&Product{}, id)
 	return result.Error
 }
 
-func (m *ProdukModel) Update(id uint, produk Produk) (*Produk, error) {
-	result := m.DB.Model(&Produk{}).Where("id = ?", id).Updates(produk)
+func (m *ProductModel) Update(id uint, produk Product) (*Product, error) {
+	result := m.DB.Model(&Product{}).Where("id = ?", id).Updates(produk)
 	if result.Error != nil {
 		return nil, result.Error
 	}

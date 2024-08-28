@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -68,67 +69,65 @@ func (t *InventoryServiceImpl) Create(sales request.CreateSalesRequest) error {
 	}
 	totalHargaSales := 0
 	salesModel := model.Sales{
-		NoInvoice:        noInv,
-		IDPembeli:        sales.IDPembeli,
-		IDPenjual:        sales.IDPenjual,
-		Tanggal:          sales.Tanggal,
-		Status:           "open",
-		TotalHarga:       0,
-		IsPurchasedByIGM: false,
+		NoInvoice:  noInv,
+		IDBuyer:    int(sales.IDBuyer),
+		IDSeller:   int(sales.IDSeller),
+		SalesDate:  sales.SalesDate,
+		Status:     "open",
+		TotalPrice: 0,
 	}
 
-	pembeliDetail, err := t.UserRemoteRepository.Find(strconv.Itoa(int(sales.IDPembeli)))
+	pembeliDetail, err := t.UserRemoteRepository.Find(strconv.Itoa(int(sales.IDBuyer)))
 	if err != nil {
 		return err
 	}
 
 	// Check stok produk
-	for _, value := range sales.Produk {
+	for _, value := range sales.Products {
 		// Inventory Service: Check product stok
-		inventoryDetail, err := t.InventoryRemoteRepository.GetDetail(strconv.Itoa(int(value.IDProduk)))
+		inventoryDetail, err := t.InventoryRemoteRepository.GetDetail(strconv.Itoa(int(value.IDProduct)))
 		if err != nil {
 			return err
 		}
-		if inventoryDetail.StokAktif < value.Qty {
-			return fmt.Errorf("stok produk %s tidak mencukupi. Stok tersedia: %d", inventoryDetail.NamaProduk, inventoryDetail.StokAktif)
+		if inventoryDetail.Stock < uint(value.Qty) {
+			return fmt.Errorf("stok produk %s tidak mencukupi. Stok tersedia: %d", inventoryDetail.Name, inventoryDetail.Stock)
 		}
 	}
 
 	salesDetailModel := []model.SalesDetail{}
-	for _, value := range sales.Produk {
+	for _, value := range sales.Products {
 
 		// Inventory Service: Check product stok
-		inventoryDetail, err := t.InventoryRemoteRepository.GetDetail(strconv.Itoa(int(value.IDProduk)))
+		inventoryDetail, err := t.InventoryRemoteRepository.GetDetail(strconv.Itoa(int(value.IDProduct)))
 		if err != nil {
 			return err
 		}
 
 		salesDetailModel = append(salesDetailModel, model.SalesDetail{
-			IDProduk:   value.IDProduk,
-			Jenis:      value.Jenis,
-			Harga:      int(value.Harga),
-			Qty:        int(value.Qty),
-			TotalHarga: int(value.Harga) * int(value.Qty),
+			IDProductOwner: int(inventoryDetail.ID),
+			Price:          float64(value.Price),
+			Qty:            int(value.Qty),
+			Subtotal:       float64(value.Price) * float64(value.Qty),
 		})
 
 		// Inventory Service: Trigger stok update
-		err = t.InventoryRemoteRepository.UpdateReduceStok(strconv.Itoa(int(value.IDProduk)), strconv.Itoa(int(value.Qty)))
+		err = t.InventoryRemoteRepository.UpdateReduceStok(strconv.Itoa(int(value.IDProduct)), strconv.Itoa(int(value.Qty)))
 		if err != nil {
 			return err
 		}
 
 		// Inventory Service: If pembeli is petani, then create inventory_petani
 		if pembeliDetail.Role == "petani" {
-			err = t.InventoryRemoteRepository.PostCreatePetani(inventoryDetail, value.Qty, sales.IDPembeli)
+			err = t.InventoryRemoteRepository.AutoCreateProdukPetani(inventoryDetail, uint(value.Qty), uint(sales.IDBuyer))
 			if err != nil {
-				return errors.New("postCreatePetani: " + err.Error())
+				return errors.New("AutoCreateProdukPetani: " + err.Error())
 			}
 		}
 
-		totalHargaSales += int(value.Harga) * int(value.Qty)
+		totalHargaSales += int(value.Price) * int(value.Qty)
 	}
 
-	salesModel.TotalHarga = totalHargaSales
+	salesModel.TotalPrice = float64(totalHargaSales)
 	err = t.SalesRepository.Save(salesModel, salesDetailModel)
 	if err != nil {
 		return err
@@ -139,7 +138,7 @@ func (t *InventoryServiceImpl) Create(sales request.CreateSalesRequest) error {
 
 func (t *InventoryServiceImpl) Update(saleId int, userId int, sales request.UpdateSalesRequest) error {
 	// Validate the request
-	salesData, err := t.SalesRepository.GetOneByQuery(model.Sales{IDPenjual: uint(userId), ID: uint(saleId)})
+	salesData, err := t.SalesRepository.GetOneByQuery(model.Sales{IDSeller: userId, ID: uint(saleId)})
 	if err != nil {
 		return err
 	}
@@ -195,12 +194,34 @@ func (t *InventoryServiceImpl) FindAll(sale *model.Sales) ([]response.SalesRespo
 		listUser[value.ID] = value
 	}
 
+	// get list of products
+	products, err := t.InventoryRemoteRepository.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	listProducts := map[uint]response.ProductResponse{}
+	for _, value := range products {
+		listProducts[value.ID] = value
+	}
+	jcart, _ := json.Marshal(products)
+	fmt.Println(string(jcart))
+
 	var sales []response.SalesResponse
 	for _, value := range result {
+
+		// get product detail
+		var salesDetail = value.SalesDetail
+		for i, salesDetailItem := range salesDetail {
+			productDetail := listProducts[uint(salesDetailItem.IDProductOwner)]
+			salesDetail[i].Name = productDetail.Name
+			salesDetail[i].Description = productDetail.Description
+		}
+
+		value.SalesDetail = salesDetail
 		newSalesDetail := response.SalesResponse{
 			Sales:         value,
-			PenjualDetail: listUser[value.IDPenjual],
-			PembeliDetail: listUser[value.IDPembeli],
+			PenjualDetail: listUser[uint(value.IDSeller)],
+			PembeliDetail: listUser[uint(value.IDBuyer)],
 		}
 		sales = append(sales, newSalesDetail)
 	}
@@ -208,8 +229,8 @@ func (t *InventoryServiceImpl) FindAll(sale *model.Sales) ([]response.SalesRespo
 	return sales, nil
 }
 
-func (t *InventoryServiceImpl) FindById(salesId int, userId uint) (response.SalesResponse, error) {
-	salesData, err := t.SalesRepository.GetOneByQuery(model.Sales{IDPenjual: userId, ID: uint(salesId)})
+func (t *InventoryServiceImpl) FindById(salesId int, userId int) (response.SalesResponse, error) {
+	salesData, err := t.SalesRepository.GetOneByQuery(model.Sales{IDSeller: userId, ID: uint(salesId)})
 	if err != nil {
 		return response.SalesResponse{}, err
 	}
@@ -226,8 +247,8 @@ func (t *InventoryServiceImpl) FindById(salesId int, userId uint) (response.Sale
 
 	formatResponse := response.SalesResponse{
 		Sales:         salesData,
-		PenjualDetail: listUser[salesData.IDPenjual],
-		PembeliDetail: listUser[salesData.IDPembeli],
+		PenjualDetail: listUser[uint(salesData.IDSeller)],
+		PembeliDetail: listUser[uint(salesData.IDBuyer)],
 	}
 	return formatResponse, nil
 }

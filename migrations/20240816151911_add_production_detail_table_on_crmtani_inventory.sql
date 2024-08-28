@@ -6,7 +6,7 @@ CREATE TABLE crmtani_inventory.production_detail (
     id_sales_detail INT NOT NULL,
     qty_use INT NOT NULL,
     note TEXT,
-    date DATE NOT NULL,
+    date DATETIME NOT NULL,
     status ENUM('pending', 'approved', 'rejected') NOT NULL,
     FOREIGN KEY (id_production) REFERENCES crmtani_inventory.production(id)
 );
