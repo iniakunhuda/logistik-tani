@@ -46,7 +46,8 @@ func main() {
 	validate := validator.New()
 	produkRepository := repository.NewProductRepositoryImpl(db)
 	produkOwnerRepository := repository.NewProductOwnerRepositoryImpl(db)
-	produkService := service.NewProductServiceImpl(produkRepository, produkOwnerRepository, validate)
+	stockTransactionRepository := repository.NewStockTransactionRepositoryImpl(db)
+	produkService := service.NewProductServiceImpl(produkRepository, produkOwnerRepository, stockTransactionRepository, validate)
 	produkController := controller.NewProductController(produkService)
 
 	// petani

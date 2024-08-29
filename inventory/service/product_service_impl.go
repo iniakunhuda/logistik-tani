@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/iniakunhuda/logistik-tani/inventory/model"
@@ -11,16 +12,18 @@ import (
 )
 
 type ProductServiceImpl struct {
-	ProductRepository      repository.ProductRepository
-	ProductOwnerRepository repository.ProductOwnerRepository
-	Validate               *validator.Validate
+	ProductRepository          repository.ProductRepository
+	ProductOwnerRepository     repository.ProductOwnerRepository
+	StockTransactionRepository repository.StockTransactionRepository
+	Validate                   *validator.Validate
 }
 
-func NewProductServiceImpl(productRepo repository.ProductRepository, productOwnerRepo repository.ProductOwnerRepository, validate *validator.Validate) ProductService {
+func NewProductServiceImpl(productRepo repository.ProductRepository, productOwnerRepo repository.ProductOwnerRepository, stockTransRepo repository.StockTransactionRepository, validate *validator.Validate) ProductService {
 	return &ProductServiceImpl{
-		ProductRepository:      productRepo,
-		ProductOwnerRepository: productOwnerRepo,
-		Validate:               validate,
+		ProductRepository:          productRepo,
+		ProductOwnerRepository:     productOwnerRepo,
+		StockTransactionRepository: stockTransRepo,
+		Validate:                   validate,
 	}
 }
 
@@ -63,16 +66,11 @@ func (t *ProductServiceImpl) Create(request request.CreateProdukRequest) error {
 		return err
 	}
 
+	// add stock movement
+	t.storeStockMovement(int(productDb.ID), int(request.IDUser), request.Stock)
+
 	return nil
 }
-
-// func (t *ProductServiceImpl) Delete(produkId int) error {
-// 	err := t.ProductRepository.Delete(produkId)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
 
 func (t *ProductServiceImpl) FindAll(produk *model.Product, userId ...string) ([]response.ProductResponse, error) {
 
@@ -187,6 +185,9 @@ func (t *ProductServiceImpl) UpdateReduceStock(productOwnerId int, stokTerbaru i
 	produkData.Stock = produkData.Stock - stokTerbaru
 	t.ProductOwnerRepository.Update(*produkData)
 
+	// add stock movement
+	t.storeStockMovement(productOwnerId, int(produkData.IDUser), stokTerbaru*-1)
+
 	return nil
 }
 
@@ -198,6 +199,9 @@ func (t *ProductServiceImpl) UpdateIncreaseStock(productOwnerId int, stokTerbaru
 
 	produkData.Stock = produkData.Stock + stokTerbaru
 	t.ProductOwnerRepository.Update(*produkData)
+
+	// add stock movement
+	t.storeStockMovement(productOwnerId, int(produkData.IDUser), stokTerbaru)
 
 	return nil
 }
@@ -229,7 +233,6 @@ func (t *ProductServiceImpl) AutoCreateProductPetani(request request.CreateProdu
 
 	// create product owner
 	productOwnerDb, _ := t.ProductOwnerRepository.GetOneByQuery(model.ProductOwner{IDProduct: int(productDb.ID), IDUser: int(request.IDUser)})
-
 	if productOwnerDb != (model.ProductOwner{}) {
 		productOwnerDb.Stock = productOwnerDb.Stock + request.Stock
 		t.ProductOwnerRepository.Update(productOwnerDb)
@@ -248,5 +251,18 @@ func (t *ProductServiceImpl) AutoCreateProductPetani(request request.CreateProdu
 		}
 	}
 
+	// add stock movement
+	t.storeStockMovement(int(productDb.ID), int(request.IDUser), request.Stock)
+
 	return nil
+}
+
+func (t *ProductServiceImpl) storeStockMovement(idProductOwner int, idUser int, stock int) {
+	stockTransaction := model.StockTransaction{
+		IDProductOwner: idProductOwner,
+		IDUser:         idUser,
+		StockMovement:  stock,
+		Date:           time.Now(),
+	}
+	t.StockTransactionRepository.Save(stockTransaction)
 }
