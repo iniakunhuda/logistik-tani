@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/iniakunhuda/logistik-tani/users/model"
 	"github.com/iniakunhuda/logistik-tani/users/request"
 	"github.com/iniakunhuda/logistik-tani/users/service"
 	"github.com/iniakunhuda/logistik-tani/users/util"
@@ -24,23 +25,26 @@ func NewUserLandController(service service.UserLandService) *UserLandController 
 
 func (controller *UserLandController) FindAll(w http.ResponseWriter, r *http.Request) {
 	IDUser := r.URL.Query().Get("id_user")
+	IDLand := r.URL.Query().Get("id_land")
+
+	var filter model.UserLand
 	if IDUser != "" {
-		dataResp, err := controller.userLandService.FindByUserId(IDUser)
-		if err != nil {
-			util.FormatResponseError(w, http.StatusInternalServerError, err)
-			return
-		}
-
-		util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
-	} else {
-		dataResp, err := controller.userLandService.FindAll()
-		if err != nil {
-			util.FormatResponseError(w, http.StatusInternalServerError, err)
-			return
-		}
-
-		util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+		IDUserInt, _ := strconv.Atoi(IDUser)
+		filter.IDUser = uint(IDUserInt)
 	}
+
+	if IDLand != "" {
+		IDLandInt, _ := strconv.Atoi(IDLand)
+		filter.ID = uint(IDLandInt)
+	}
+
+	dataResp, err := controller.userLandService.FindAll(&filter)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
 }
 
 func (controller *UserLandController) FindById(w http.ResponseWriter, r *http.Request) {

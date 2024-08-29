@@ -101,7 +101,7 @@ func (controller *ProductController) Create(w http.ResponseWriter, r *http.Reque
 
 	// check user id
 	if userIdUint != uint64(userRequest.IDUser) {
-		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User not match"))
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User tidak sama"))
 		return
 	}
 

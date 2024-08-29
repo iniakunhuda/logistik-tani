@@ -53,7 +53,12 @@ func main() {
 	// petani
 	productPetaniController := controller.NewProductPetaniController(produkService)
 
-	routes := router.NewRouter(produkController, productPetaniController)
+	// production
+	productionRepository := repository.NewProductionRepositoryImpl(db)
+	productionService := service.NewProductionServiceImpl(productionRepository, produkOwnerRepository, validate)
+	productionController := controller.NewProductionController(productionService)
+
+	routes := router.NewRouter(produkController, productPetaniController, productionController)
 	srv := &http.Server{
 		Addr:         serverURI,
 		ErrorLog:     errLog,

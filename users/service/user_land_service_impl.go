@@ -1,8 +1,6 @@
 package service
 
 import (
-	"strconv"
-
 	"github.com/go-playground/validator/v10"
 	"github.com/iniakunhuda/logistik-tani/users/model"
 	"github.com/iniakunhuda/logistik-tani/users/repository"
@@ -50,8 +48,8 @@ func (t *UserLandServiceImpl) Delete(landId int) error {
 	return nil
 }
 
-func (t *UserLandServiceImpl) FindAll() ([]response.UserLandResponse, error) {
-	result, err := t.UserLandRepository.FindAll()
+func (t *UserLandServiceImpl) FindAll(land *model.UserLand) ([]response.UserLandResponse, error) {
+	result, err := t.UserLandRepository.GetAllByQuery(*land)
 
 	if err != nil {
 		return nil, err
@@ -115,22 +113,4 @@ func (t *UserLandServiceImpl) Update(landId int, user request.UpdateUserLandRequ
 	t.UserLandRepository.Update(*landData)
 
 	return nil
-}
-
-func (t *UserLandServiceImpl) FindByUserId(userId string) ([]response.UserLandResponse, error) {
-	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
-	result, err := t.UserLandRepository.GetAllByQuery(model.UserLand{IDUser: uint(userIdUint)})
-	if err != nil {
-		return nil, err
-	}
-
-	var lands []response.UserLandResponse
-	for _, value := range result {
-		user := response.UserLandResponse{
-			UserLand: value,
-		}
-		lands = append(lands, user)
-	}
-
-	return lands, nil
 }
