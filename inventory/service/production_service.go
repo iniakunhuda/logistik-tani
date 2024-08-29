@@ -12,4 +12,6 @@ type ProductionService interface {
 	FindById(productionId int) (response.ProductionResponse, error)
 	FindAll(production *model.Production) ([]response.ProductionResponse, error)
 	Update(productionId int, production request.UpdateProductionRequest) error
+
+	CreateRiwayat(production request.CreateProductionDetailRequest) error
 }

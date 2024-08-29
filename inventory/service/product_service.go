@@ -12,8 +12,8 @@ type ProductService interface {
 	FindAll(produk *model.Product, userId ...string) ([]response.ProductResponse, error)
 	Update(produkOwnerId int, produk request.UpdateProdukRequest) (response.ProductResponse, error)
 
-	UpdateReduceStock(produkOwnerId int, stock int) error
-	UpdateIncreaseStock(produkOwnerId int, stock int) error
+	UpdateReduceStock(produkOwnerId int, stock int, desc string) error
+	UpdateIncreaseStock(produkOwnerId int, stock int, desc string) error
 
 	// ketika sales pembeli petani, maka produk petani akan otomatis dibuat
 	AutoCreateProductPetani(produk request.CreateProdukRequest) error

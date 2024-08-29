@@ -71,8 +71,8 @@ func (controller *ProductionController) FindById(w http.ResponseWriter, r *http.
 }
 
 func (controller *ProductionController) Create(w http.ResponseWriter, r *http.Request) {
-	// userId := r.Header.Get("AuthUserID")
-	// userIdUint, _ := strconv.ParseUint(userId, 10, 64)
+	userId := r.Header.Get("AuthUserID")
+	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
 
 	var req request.CreateProductionRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -83,10 +83,10 @@ func (controller *ProductionController) Create(w http.ResponseWriter, r *http.Re
 	defer r.Body.Close()
 
 	// check user id
-	// if userIdUint != uint64(req.IDUser) {
-	// 	util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User tidak sama"))
-	// 	return
-	// }
+	if userIdUint != uint64(req.IDUser) {
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User tidak sama"))
+		return
+	}
 
 	validate := validator.New()
 	err = validate.Struct(req)
@@ -140,4 +140,33 @@ func (controller *ProductionController) Update(w http.ResponseWriter, r *http.Re
 	}
 
 	util.FormatResponseSuccess(w, http.StatusOK, nil, nil)
+}
+
+func (controller *ProductionController) CreateRiwayat(w http.ResponseWriter, r *http.Request) {
+	// userId := r.Header.Get("AuthUserID")
+	// userIdUint, _ := strconv.ParseUint(userId, 10, 64)
+
+	var req request.CreateProductionDetailRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+	defer r.Body.Close()
+
+	validate := validator.New()
+	err = validate.Struct(req)
+	if err != nil {
+		errors := err.(validator.ValidationErrors)
+		util.FormatResponseError(w, http.StatusBadRequest, errors)
+		return
+	}
+
+	err = controller.productionService.CreateRiwayat(req)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusCreated, nil, nil)
 }

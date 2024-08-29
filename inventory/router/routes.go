@@ -27,6 +27,7 @@ func NewRouter(productController *controller.ProductController, productPetaniCon
 	production := r.PathPrefix("/api/panen").Subrouter()
 	production.Use(util.AuthVerify)
 	production.HandleFunc("", productionController.FindAll).Methods("GET")
+	production.HandleFunc("/history", productionController.CreateRiwayat).Methods("POST")
 	production.HandleFunc("/{id}", productionController.FindById).Methods("GET")
 	production.HandleFunc("", productionController.Create).Methods("POST")
 	production.HandleFunc("/{id}", productionController.Update).Methods("PUT")

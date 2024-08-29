@@ -67,7 +67,7 @@ func (t *ProductServiceImpl) Create(request request.CreateProdukRequest) error {
 	}
 
 	// add stock movement
-	t.storeStockMovement(int(productDb.ID), int(request.IDUser), request.Stock)
+	t.storeStockMovement(int(productDb.ID), int(request.IDUser), request.Stock, "init")
 
 	return nil
 }
@@ -141,10 +141,6 @@ func (t *ProductServiceImpl) Update(produkOwnerId int, produk request.UpdateProd
 		produkData.PriceSell = int(produk.PriceSell)
 	}
 
-	if produk.Stock != 0 {
-		produkData.Stock = int(produk.Stock)
-	}
-
 	t.ProductOwnerRepository.Update(*produkData)
 
 	// find
@@ -166,13 +162,12 @@ func (t *ProductServiceImpl) Update(produkOwnerId int, produk request.UpdateProd
 		PriceBuy:    uint(value.PriceBuy),
 		PriceSell:   uint(value.PriceSell),
 		Category:    value.Product.Category,
-		Stock:       uint(value.Stock),
 	}
 
 	return formatResponse, nil
 }
 
-func (t *ProductServiceImpl) UpdateReduceStock(productOwnerId int, stokTerbaru int) error {
+func (t *ProductServiceImpl) UpdateReduceStock(productOwnerId int, stokTerbaru int, desc string) error {
 	produkData, err := t.ProductOwnerRepository.FindById(productOwnerId)
 	if err != nil {
 		return err
@@ -186,12 +181,12 @@ func (t *ProductServiceImpl) UpdateReduceStock(productOwnerId int, stokTerbaru i
 	t.ProductOwnerRepository.Update(*produkData)
 
 	// add stock movement
-	t.storeStockMovement(productOwnerId, int(produkData.IDUser), stokTerbaru*-1)
+	t.storeStockMovement(productOwnerId, int(produkData.IDUser), stokTerbaru*-1, desc)
 
 	return nil
 }
 
-func (t *ProductServiceImpl) UpdateIncreaseStock(productOwnerId int, stokTerbaru int) error {
+func (t *ProductServiceImpl) UpdateIncreaseStock(productOwnerId int, stokTerbaru int, desc string) error {
 	produkData, err := t.ProductOwnerRepository.FindById(productOwnerId)
 	if err != nil {
 		return err
@@ -201,7 +196,7 @@ func (t *ProductServiceImpl) UpdateIncreaseStock(productOwnerId int, stokTerbaru
 	t.ProductOwnerRepository.Update(*produkData)
 
 	// add stock movement
-	t.storeStockMovement(productOwnerId, int(produkData.IDUser), stokTerbaru)
+	t.storeStockMovement(productOwnerId, int(produkData.IDUser), stokTerbaru, desc)
 
 	return nil
 }
@@ -252,17 +247,18 @@ func (t *ProductServiceImpl) AutoCreateProductPetani(request request.CreateProdu
 	}
 
 	// add stock movement
-	t.storeStockMovement(int(productDb.ID), int(request.IDUser), request.Stock)
+	t.storeStockMovement(int(productDb.ID), int(request.IDUser), request.Stock, "purchase")
 
 	return nil
 }
 
-func (t *ProductServiceImpl) storeStockMovement(idProductOwner int, idUser int, stock int) {
+func (t *ProductServiceImpl) storeStockMovement(idProductOwner int, idUser int, stock int, desc string) {
 	stockTransaction := model.StockTransaction{
 		IDProductOwner: idProductOwner,
 		IDUser:         idUser,
 		StockMovement:  stock,
 		Date:           time.Now(),
+		Description:    desc,
 	}
 	t.StockTransactionRepository.Save(stockTransaction)
 }

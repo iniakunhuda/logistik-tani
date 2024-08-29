@@ -55,7 +55,14 @@ func main() {
 
 	// production
 	productionRepository := repository.NewProductionRepositoryImpl(db)
-	productionService := service.NewProductionServiceImpl(productionRepository, produkOwnerRepository, validate)
+	productionDetailRepository := repository.NewProductionDetailRepositoryImpl(db)
+	productionService := service.NewProductionServiceImpl(
+		productionRepository,
+		productionDetailRepository,
+		stockTransactionRepository,
+		produkOwnerRepository,
+		validate,
+	)
 	productionController := controller.NewProductionController(productionService)
 
 	routes := router.NewRouter(produkController, productPetaniController, productionController)

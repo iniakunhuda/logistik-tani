@@ -5,6 +5,7 @@ CREATE TABLE crmtani_inventory.stock_transaction (
     id_product_owner INT NOT NULL,
     id_user INT NOT NULL,
     stock_movement INT NOT NULL,  -- positive for increase, negative for decrease
+    description TEXT NULL,
     date DATETIME NOT NULL,
     FOREIGN KEY (id_product_owner) REFERENCES crmtani_inventory.product_owner(id)
 );

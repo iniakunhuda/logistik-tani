@@ -235,7 +235,7 @@ func (controller *ProductController) UpdateReduceStock(w http.ResponseWriter, r 
 		return
 	}
 
-	err = controller.productService.UpdateReduceStock(productIdInt, stokTerbaru)
+	err = controller.productService.UpdateReduceStock(productIdInt, stokTerbaru, requestBody.Description)
 	if err != nil {
 		fmt.Print(err)
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
@@ -264,7 +264,7 @@ func (controller *ProductController) UpdateIncreaseStock(w http.ResponseWriter, 
 		return
 	}
 
-	err = controller.productService.UpdateIncreaseStock(productIdInt, stokTerbaru)
+	err = controller.productService.UpdateIncreaseStock(productIdInt, stokTerbaru, requestBody.Description)
 	if err != nil {
 		fmt.Print(err)
 		util.FormatResponseError(w, http.StatusInternalServerError, err)

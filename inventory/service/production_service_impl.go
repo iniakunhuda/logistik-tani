@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"strconv"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/iniakunhuda/logistik-tani/inventory/model"
@@ -13,19 +14,29 @@ import (
 )
 
 type ProductionServiceImpl struct {
-	TokenAuth            string
-	ProductionRepository repository.ProductionRepository
-	InventoryRepository  repository.ProductOwnerRepository
-	UserRemoteRepository remote.UserRemoteRepository
-	Validate             *validator.Validate
+	TokenAuth                  string
+	ProductionRepository       repository.ProductionRepository
+	ProductionDetailRepository repository.ProductionDetailRepository
+	ProductOwnerRepository     repository.ProductOwnerRepository
+	StockTransactionRepository repository.StockTransactionRepository
+	UserRemoteRepository       remote.UserRemoteRepository
+	Validate                   *validator.Validate
 }
 
-func NewProductionServiceImpl(productionRepo repository.ProductionRepository, inventoryRepo repository.ProductOwnerRepository, validate *validator.Validate) ProductionService {
+func NewProductionServiceImpl(
+	productionRepo repository.ProductionRepository,
+	productionDetailRepo repository.ProductionDetailRepository,
+	stockTransactionRepo repository.StockTransactionRepository,
+	inventoryRepo repository.ProductOwnerRepository,
+	validate *validator.Validate,
+) ProductionService {
 	return &ProductionServiceImpl{
-		ProductionRepository: productionRepo,
-		InventoryRepository:  inventoryRepo,
-		UserRemoteRepository: remote.NewUserRemoteRepositoryImpl(),
-		Validate:             validate,
+		ProductionRepository:       productionRepo,
+		ProductionDetailRepository: productionDetailRepo,
+		StockTransactionRepository: stockTransactionRepo,
+		ProductOwnerRepository:     inventoryRepo,
+		UserRemoteRepository:       remote.NewUserRemoteRepositoryImpl(),
+		Validate:                   validate,
 	}
 }
 
@@ -172,4 +183,66 @@ func (t *ProductionServiceImpl) FindById(productionId int) (response.ProductionR
 		UserDetail: listUser[uint(productionDb.IDUser)],
 	}
 	return formatResponse, nil
+}
+
+// Riwayat Panen
+func (t *ProductionServiceImpl) CreateRiwayat(production request.CreateProductionDetailRequest) error {
+	productionDb, err := t.ProductionRepository.GetOneByQuery(model.Production{ID: uint(production.IDProduction)})
+	if err != nil {
+		return err
+	}
+
+	if productionDb.ID == 0 {
+		return errors.New("Panen tidak ditemukan")
+	}
+
+	for _, product := range production.Products {
+		productionModel := model.ProductionDetail{
+			IDProduction:   production.IDProduction,
+			IDProductOwner: product.IDProduct,
+			QtyUse:         product.Qty,
+			Note:           product.Note,
+			Date:           production.Date,
+		}
+
+		// reduce stock & store stock movement
+		t.UpdateReduceStock(product.IDProduct, product.Qty, "panen")
+
+		err := t.ProductionDetailRepository.Save(productionModel)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (t *ProductionServiceImpl) UpdateReduceStock(productOwnerId int, stokTerbaru int, desc string) error {
+	produkData, err := t.ProductOwnerRepository.FindById(productOwnerId)
+	if err != nil {
+		return err
+	}
+
+	if stokTerbaru > int(produkData.Stock) {
+		return errors.New("Error! stok tidak mencukupi")
+	}
+
+	produkData.Stock = produkData.Stock - stokTerbaru
+	t.ProductOwnerRepository.Update(*produkData)
+
+	// add stock movement
+	t.storeStockMovement(productOwnerId, int(produkData.IDUser), stokTerbaru*-1, desc)
+
+	return nil
+}
+
+func (t *ProductionServiceImpl) storeStockMovement(idProductOwner int, idUser int, stock int, desc string) {
+	stockTransaction := model.StockTransaction{
+		IDProductOwner: idProductOwner,
+		IDUser:         idUser,
+		StockMovement:  stock,
+		Date:           time.Now(),
+		Description:    desc,
+	}
+	t.StockTransactionRepository.Save(stockTransaction)
 }
