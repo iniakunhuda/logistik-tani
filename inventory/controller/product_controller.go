@@ -31,7 +31,7 @@ func (controller *ProductController) FindAll(w http.ResponseWriter, r *http.Requ
 
 	q := r.URL.Query()
 	filterJenis := q.Get("jenis")
-	filterIdUser := q.Get("idUser")
+	filterIdUser := q.Get("id_user")
 
 	if filterIdUser == "" {
 		filterIdUser = userId
@@ -162,7 +162,7 @@ func (controller *ProductController) Update(w http.ResponseWriter, r *http.Reque
 func (controller *ProductController) FindAllWithoutAuth(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	filterJenis := q.Get("jenis")
-	filterIdUser := q.Get("idUser")
+	filterIdUser := q.Get("id_user")
 
 	if filterJenis != "" && filterIdUser != "" {
 		dataResp, err := controller.productService.FindAll(&model.Product{Category: filterJenis}, filterIdUser)

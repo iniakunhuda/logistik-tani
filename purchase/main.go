@@ -42,13 +42,20 @@ func main() {
 	}
 
 	serverURI := fmt.Sprintf("%s:%d", *serverAddr, *serverPort)
-
 	validate := validator.New()
-	produkRepository := repository.NewPurchaseRepositoryImpl(db)
-	produkService := service.NewInventoryServiceImpl(produkRepository, validate)
-	produkController := controller.NewPurchaseController(produkService)
 
-	routes := router.NewRouter(produkController)
+	// purchase
+	purchaseRepository := repository.NewPurchaseRepositoryImpl(db)
+	purchaseService := service.NewPurchaseServiceImpl(purchaseRepository, validate)
+	purchaseController := controller.NewPurchaseController(purchaseService)
+
+	// purchase igm
+	purchaseIgmRepository := repository.NewPurchaseIgmRepositoryImpl(db)
+	purchaseIgmDetailRepository := repository.NewPurchaseIgmDetailRepositoryImpl(db)
+	purchaseIgmService := service.NewPurchaseIgmServiceImpl(purchaseIgmRepository, purchaseIgmDetailRepository, validate)
+	purchaseIgmController := controller.NewPurchaseIgmController(purchaseIgmService)
+
+	routes := router.NewRouter(purchaseController, purchaseIgmController)
 	srv := &http.Server{
 		Addr:         serverURI,
 		ErrorLog:     errLog,

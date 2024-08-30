@@ -1,4 +1,4 @@
-package purchaseigm
+package purchaseigmmodel
 
 import (
 	"errors"

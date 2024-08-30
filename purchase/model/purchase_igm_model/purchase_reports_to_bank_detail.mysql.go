@@ -1,4 +1,4 @@
-package purchaseigm
+package purchaseigmmodel
 
 type PurchaseReportsToBankDetail struct {
 	ID                      uint `gorm:"primaryKey;autoIncrement" json:"id"`

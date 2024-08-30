@@ -4,6 +4,8 @@ CREATE TABLE crmtani_purchase.purchase_igm_detail (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_purchase_igm INT NOT NULL,
     id_production INT NOT NULL,
+    id_user INT NOT NULL,
+    id_user_land INT NOT NULL,
     total_kg DECIMAL(10, 2) NOT NULL,
     harga_kg DECIMAL(10, 2) NOT NULL,
     subtotal DECIMAL(10, 2) NOT NULL,
