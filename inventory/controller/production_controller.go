@@ -28,19 +28,16 @@ func (controller *ProductionController) FindAll(w http.ResponseWriter, r *http.R
 	// userId := r.Header.Get("AuthUserID")
 
 	q := r.URL.Query()
-	filterIdUser := q.Get("idUser")
+	filterIdUser := q.Get("id_user")
+
+	filter := model.Production{}
+
 	if filterIdUser != "" {
 		userID, _ := strconv.Atoi(filterIdUser)
-		dataResp, err := controller.productionService.FindAll(&model.Production{IDUser: userID})
-		if err != nil {
-			util.FormatResponseError(w, http.StatusInternalServerError, err)
-			return
-		}
-		util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
-		return
+		filter.IDUser = userID
 	}
 
-	dataResp, err := controller.productionService.FindAll(&model.Production{})
+	dataResp, err := controller.productionService.FindAll(&filter)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return

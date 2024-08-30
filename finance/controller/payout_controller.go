@@ -27,7 +27,20 @@ func NewPayoutHistoryController(service service.PayoutHistoryService) *PayoutHis
 func (controller *PayoutHistoryController) FindAll(w http.ResponseWriter, r *http.Request) {
 	// userId := r.Header.Get("AuthUserID")
 	// userIdInt, _ := strconv.Atoi(userId)
-	dataResp, err := controller.payoutHistoryService.FindAll(&model.PayoutHistory{})
+	q := r.URL.Query()
+	filter := &model.PayoutHistory{}
+
+	if q.Get("id_sender") != "" {
+		idSender, _ := strconv.Atoi(q.Get("id_sender"))
+		filter = &model.PayoutHistory{IDSender: idSender}
+	}
+
+	if q.Get("id_receiver") != "" {
+		idReceiver, _ := strconv.Atoi(q.Get("id_receiver"))
+		filter = &model.PayoutHistory{IDReceiver: idReceiver}
+	}
+
+	dataResp, err := controller.payoutHistoryService.FindAll(filter)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return

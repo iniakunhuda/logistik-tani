@@ -14,7 +14,7 @@ import (
 	"github.com/iniakunhuda/logistik-tani/purchase/response"
 )
 
-type InventoryServiceImpl struct {
+type PurchaseServiceImpl struct {
 	TokenAuth                 string
 	PurchaseRepository        repository.PurchaseRepository
 	UserRemoteRepository      remote.UserRemoteRepository
@@ -22,8 +22,8 @@ type InventoryServiceImpl struct {
 	Validate                  *validator.Validate
 }
 
-func NewInventoryServiceImpl(purchasesRepository repository.PurchaseRepository, validate *validator.Validate) PurchaseService {
-	return &InventoryServiceImpl{
+func NewPurchaseServiceImpl(purchasesRepository repository.PurchaseRepository, validate *validator.Validate) PurchaseService {
+	return &PurchaseServiceImpl{
 		PurchaseRepository:        purchasesRepository,
 		UserRemoteRepository:      remote.NewUserRemoteRepositoryImpl(),
 		InventoryRemoteRepository: remote.NewInventoryRemoteRepositoryImpl(""), // TODO: set bearer token
@@ -31,7 +31,7 @@ func NewInventoryServiceImpl(purchasesRepository repository.PurchaseRepository, 
 	}
 }
 
-func (t *InventoryServiceImpl) GenerateNoInvoice() (string, error) {
+func (t *PurchaseServiceImpl) GenerateNoInvoice() (string, error) {
 	sales, err := t.PurchaseRepository.FindLastRow()
 
 	lastInv := 0
@@ -57,7 +57,7 @@ func (t *InventoryServiceImpl) GenerateNoInvoice() (string, error) {
 	return noInv, nil
 }
 
-func (t *InventoryServiceImpl) Create(purchase request.CreatePurchaseRequest) error {
+func (t *PurchaseServiceImpl) Create(purchase request.CreatePurchaseRequest) error {
 
 	noInv, err := t.GenerateNoInvoice()
 	if err != nil {
@@ -123,7 +123,7 @@ func (t *InventoryServiceImpl) Create(purchase request.CreatePurchaseRequest) er
 	return nil
 }
 
-func (t *InventoryServiceImpl) Update(purchaseId int, userId int, purchases request.UpdatePurchaseRequest) error {
+func (t *PurchaseServiceImpl) Update(purchaseId int, userId int, purchases request.UpdatePurchaseRequest) error {
 	// Validate the request
 	purchasesData, err := t.PurchaseRepository.GetOneByQuery(model.Purchase{IDBuyer: int(userId), ID: uint(purchaseId)})
 	if err != nil {
@@ -156,7 +156,7 @@ func (t *InventoryServiceImpl) Update(purchaseId int, userId int, purchases requ
 	return nil
 }
 
-func (t *InventoryServiceImpl) Delete(purchaseId int) error {
+func (t *PurchaseServiceImpl) Delete(purchaseId int) error {
 	err := t.PurchaseRepository.Delete(purchaseId)
 	if err != nil {
 		return err
@@ -164,7 +164,7 @@ func (t *InventoryServiceImpl) Delete(purchaseId int) error {
 	return nil
 }
 
-func (t *InventoryServiceImpl) FindAll(purchase *model.Purchase) ([]response.PurchaseResponse, error) {
+func (t *PurchaseServiceImpl) FindAll(purchase *model.Purchase) ([]response.PurchaseResponse, error) {
 	result, err := t.PurchaseRepository.GetAllByQuery(*purchase)
 
 	if err != nil {
@@ -216,7 +216,7 @@ func (t *InventoryServiceImpl) FindAll(purchase *model.Purchase) ([]response.Pur
 	return purchases, nil
 }
 
-func (t *InventoryServiceImpl) FindById(purchaseId int, userId uint) (response.PurchaseResponse, error) {
+func (t *PurchaseServiceImpl) FindById(purchaseId int, userId uint) (response.PurchaseResponse, error) {
 	purchaseData, err := t.PurchaseRepository.GetOneByQuery(model.Purchase{IDBuyer: int(userId), ID: uint(purchaseId)})
 	if err != nil {
 		return response.PurchaseResponse{}, err
