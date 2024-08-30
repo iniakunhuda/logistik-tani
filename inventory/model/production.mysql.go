@@ -14,12 +14,7 @@ type Production struct {
 	TotalPanenKg int        `gorm:"default:0" json:"total_panen_kg"`
 	Status       string     `gorm:"type:enum('pending', 'done');not null" json:"status" validate:"required,oneof=pending done"`
 
-	Histories []ProductionDetailDatum `gorm:"foreignKey:IDProduction;references:ID" json:"histories"`
-}
-
-type ProductionDetailDatum struct {
-	ProductionDetail
-	Production Production `gorm:"-" json:"production,omitempty"`
+	Histories []ProductionDetail `gorm:"foreignKey:IDProduction;references:ID" json:"histories"`
 }
 
 func (Production) TableName() string {

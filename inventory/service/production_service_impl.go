@@ -11,6 +11,7 @@ import (
 	"github.com/iniakunhuda/logistik-tani/inventory/repository/remote"
 	"github.com/iniakunhuda/logistik-tani/inventory/request"
 	"github.com/iniakunhuda/logistik-tani/inventory/response"
+	userresponse "github.com/iniakunhuda/logistik-tani/inventory/response/user_response"
 )
 
 type ProductionServiceImpl struct {
@@ -150,11 +151,23 @@ func (t *ProductionServiceImpl) FindAll(sale *model.Production) ([]response.Prod
 		listUser[value.ID] = value
 	}
 
+	// get user land
+	lands, err := t.UserRemoteRepository.GetLands()
+	if err != nil {
+		return nil, err
+	}
+	listLand := map[uint]userresponse.UserLandRowResponse{}
+	for _, value := range lands.Data {
+		listLand[value.ID] = value
+	}
+
 	var production []response.ProductionResponse
 	for _, value := range result {
+
 		newproductionDetail := response.ProductionResponse{
 			Production: value,
 			UserDetail: listUser[uint(value.IDUser)],
+			LandDetail: response.UserLandRowResponse(listLand[uint(value.IDUserLand)]),
 		}
 		production = append(production, newproductionDetail)
 	}

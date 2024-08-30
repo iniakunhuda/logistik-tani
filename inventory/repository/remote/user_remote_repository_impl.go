@@ -76,6 +76,23 @@ func (t UserRemoteRepositoryImpl) Find(id string) (response.UserResponse, error)
 	return userResponse.Data, err
 }
 
+func (t UserRemoteRepositoryImpl) GetLands() (userresponse.UserLandResponse, error) {
+	var userResponse userresponse.UserLandResponse
+	_, err := req.C().R().
+		SetHeader("Accept", "application/json").
+		SetBearerAuthToken("").
+		EnableDump().
+		SetSuccessResult(&userResponse).
+		Get(t.baseUrl + "/lands")
+
+	if err != nil {
+		fmt.Println(err)
+		return userResponse, err
+	}
+
+	return userResponse, nil
+}
+
 func (t UserRemoteRepositoryImpl) GetLandByUserId(userId string, landId string) (userresponse.UserLandResponse, error) {
 	var userResponse userresponse.UserLandResponse
 	_, err := req.C().R().

@@ -25,7 +25,7 @@ func (t *ProductionRepositoryImpl) Save(panen model.Production) error {
 
 func (t *ProductionRepositoryImpl) FindAll() (panens []model.Production, err error) {
 	var dataList []model.Production
-	result := t.Db.Preload("Histories").Find(&dataList)
+	result := t.Db.Preload("Histories").Preload("Histories.ProductOwner").Preload("Histories.ProductOwner.Product").Find(&dataList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -34,7 +34,7 @@ func (t *ProductionRepositoryImpl) FindAll() (panens []model.Production, err err
 
 func (t *ProductionRepositoryImpl) FindById(panenId int) (*model.Production, error) {
 	var dataRow model.Production
-	result := t.Db.Preload("Histories").Find(&dataRow, panenId)
+	result := t.Db.Preload("Histories").Preload("Histories.ProductOwner").Preload("Histories.ProductOwner.Product").Find(&dataRow, panenId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -63,7 +63,7 @@ func (t *ProductionRepositoryImpl) Update(panen model.Production) error {
 
 func (t *ProductionRepositoryImpl) GetAllByQuery(panen model.Production) (panens []model.Production, err error) {
 	var dataList []model.Production
-	result := t.Db.Where(&panen).Preload("Histories").Find(&dataList)
+	result := t.Db.Where(&panen).Preload("Histories").Preload("Histories.ProductOwner").Preload("Histories.ProductOwner.Product").Find(&dataList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -71,7 +71,7 @@ func (t *ProductionRepositoryImpl) GetAllByQuery(panen model.Production) (panens
 }
 
 func (t *ProductionRepositoryImpl) GetOneByQuery(panen model.Production) (panenData model.Production, err error) {
-	result := t.Db.Where(&panen).Preload("Histories").First(&panenData)
+	result := t.Db.Where(&panen).Preload("Histories").Preload("Histories.ProductOwner").Preload("Histories.ProductOwner.Product").First(&panenData)
 	if result.Error != nil {
 		return model.Production{}, result.Error
 	}

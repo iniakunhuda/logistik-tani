@@ -9,5 +9,6 @@ type UserRemoteRepository interface {
 	Profile() (response.UserResponse, error)
 	GetAll() ([]response.UserResponse, error)
 	Find(id string) (response.UserResponse, error)
+	GetLands() (userresponse.UserLandResponse, error)
 	GetLandByUserId(userId string, landId string) (userresponse.UserLandResponse, error)
 }
