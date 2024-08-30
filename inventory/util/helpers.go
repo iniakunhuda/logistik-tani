@@ -2,6 +2,7 @@ package util
 
 import (
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -33,4 +34,11 @@ func GetTimeNow() string {
 func FormatStringToInt(desc string) int {
 	formatInt, _ := strconv.Atoi(desc)
 	return formatInt
+}
+
+func GetEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
 }

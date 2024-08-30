@@ -3,7 +3,6 @@ package model
 import (
 	"errors"
 
-	"github.com/iniakunhuda/logistik-tani/inventory/response"
 	"gorm.io/gorm"
 )
 
@@ -49,8 +48,4 @@ func (m *ProductOwnerModel) Update(id uint, data ProductOwner) (*ProductOwner, e
 		return nil, result.Error
 	}
 	return &data, nil
-}
-
-func (m *ProductOwnerModel) toResponse() response.ProductResponse {
-	return response.ProductResponse{}
 }

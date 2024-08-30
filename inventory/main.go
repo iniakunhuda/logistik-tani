@@ -46,13 +46,26 @@ func main() {
 	validate := validator.New()
 	produkRepository := repository.NewProductRepositoryImpl(db)
 	produkOwnerRepository := repository.NewProductOwnerRepositoryImpl(db)
-	produkService := service.NewProductServiceImpl(produkRepository, produkOwnerRepository, validate)
+	stockTransactionRepository := repository.NewStockTransactionRepositoryImpl(db)
+	produkService := service.NewProductServiceImpl(produkRepository, produkOwnerRepository, stockTransactionRepository, validate)
 	produkController := controller.NewProductController(produkService)
 
 	// petani
 	productPetaniController := controller.NewProductPetaniController(produkService)
 
-	routes := router.NewRouter(produkController, productPetaniController)
+	// production
+	productionRepository := repository.NewProductionRepositoryImpl(db)
+	productionDetailRepository := repository.NewProductionDetailRepositoryImpl(db)
+	productionService := service.NewProductionServiceImpl(
+		productionRepository,
+		productionDetailRepository,
+		stockTransactionRepository,
+		produkOwnerRepository,
+		validate,
+	)
+	productionController := controller.NewProductionController(productionService)
+
+	routes := router.NewRouter(produkController, productPetaniController, productionController)
 	srv := &http.Server{
 		Addr:         serverURI,
 		ErrorLog:     errLog,

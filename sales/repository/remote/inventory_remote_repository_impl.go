@@ -74,6 +74,7 @@ func (t InventoryRemoteRepositoryImpl) UpdateReduceStok(id string, stok string) 
 		SetBody(map[string]interface{}{
 			"id_produk":    id,
 			"stok_terbaru": stok,
+			"description":  "sales",
 		}).
 		SetSuccessResult(&response).
 		SetErrorResult(&response).
@@ -101,6 +102,7 @@ func (t InventoryRemoteRepositoryImpl) UpdateIncreaseStok(id string, stok string
 		SetBody(map[string]interface{}{
 			"id_produk":    id,
 			"stok_terbaru": stok,
+			"description":  "purchase",
 		}).
 		SetSuccessResult(&response).
 		SetErrorResult(&response).

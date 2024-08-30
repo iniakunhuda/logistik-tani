@@ -6,7 +6,7 @@ import (
 	"github.com/iniakunhuda/logistik-tani/inventory/util"
 )
 
-func NewRouter(productController *controller.ProductController, productPetaniController *controller.ProductPetaniController) *mux.Router {
+func NewRouter(productController *controller.ProductController, productPetaniController *controller.ProductPetaniController, productionController *controller.ProductionController) *mux.Router {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/api/inventory/all", productController.FindAllWithoutAuth).Methods("GET")
@@ -23,6 +23,14 @@ func NewRouter(productController *controller.ProductController, productPetaniCon
 
 	inventoryPetani := r.PathPrefix("/api/inventory/petani").Subrouter()
 	inventoryPetani.HandleFunc("", productPetaniController.Create).Methods("POST")
+
+	production := r.PathPrefix("/api/panen").Subrouter()
+	production.Use(util.AuthVerify)
+	production.HandleFunc("", productionController.FindAll).Methods("GET")
+	production.HandleFunc("/history", productionController.CreateRiwayat).Methods("POST")
+	production.HandleFunc("/{id}", productionController.FindById).Methods("GET")
+	production.HandleFunc("", productionController.Create).Methods("POST")
+	production.HandleFunc("/{id}", productionController.Update).Methods("PUT")
 
 	return r
 }
