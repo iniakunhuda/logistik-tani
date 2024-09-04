@@ -24,6 +24,8 @@ func NewUserController(service service.UserService) *UserController {
 
 func (controller *UserController) FindAll(w http.ResponseWriter, r *http.Request) {
 	role := r.URL.Query().Get("role")
+	exclude := r.URL.Query().Get("exclude")
+
 	if role != "" {
 		dataResp, err := controller.userService.FindByRole(role)
 		if err != nil {
@@ -31,6 +33,13 @@ func (controller *UserController) FindAll(w http.ResponseWriter, r *http.Request
 			return
 		}
 
+		util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+	} else if exclude != "" {
+		dataResp, err := controller.userService.FindAllExclude(exclude)
+		if err != nil {
+			util.FormatResponseError(w, http.StatusInternalServerError, err)
+			return
+		}
 		util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
 	} else {
 		dataResp, err := controller.userService.FindAll()

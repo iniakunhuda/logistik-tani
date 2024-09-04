@@ -6,7 +6,7 @@ import (
 	"github.com/iniakunhuda/logistik-tani/purchase/util"
 )
 
-func NewRouter(purchaseController *controller.PurchaseController, purchaseIgmController *controller.PurchaseIgmController) *mux.Router {
+func NewRouter(purchaseController *controller.PurchaseController, purchaseIgmController *controller.PurchaseIgmController, purchaseReportsToBankController *controller.PurchaseReportsToBankController) *mux.Router {
 	r := mux.NewRouter()
 
 	purchase := r.PathPrefix("/api/purchase").Subrouter()
@@ -23,6 +23,13 @@ func NewRouter(purchaseController *controller.PurchaseController, purchaseIgmCon
 	purchaseIgm.HandleFunc("/{id}", purchaseIgmController.FindById).Methods("GET")
 	purchaseIgm.HandleFunc("", purchaseIgmController.Create).Methods("POST")
 	purchaseIgm.HandleFunc("/{id}", purchaseIgmController.Delete).Methods("DELETE")
+
+	// setor purchase ke bank
+	reportPurchaseIgmToBank := r.PathPrefix("/api/report-to-bank").Subrouter()
+	reportPurchaseIgmToBank.HandleFunc("", purchaseReportsToBankController.FindAll).Methods("GET")
+	reportPurchaseIgmToBank.HandleFunc("/{id}", purchaseReportsToBankController.FindById).Methods("GET")
+	reportPurchaseIgmToBank.HandleFunc("", purchaseReportsToBankController.Create).Methods("POST")
+	reportPurchaseIgmToBank.HandleFunc("/{id}", purchaseReportsToBankController.Delete).Methods("DELETE")
 
 	return r
 }

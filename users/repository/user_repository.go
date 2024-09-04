@@ -10,4 +10,6 @@ type UserRepository interface {
 	FindAll() (users []model.User, err error)
 	GetAllByQuery(user model.User) (users []model.User, err error)
 	GetOneByQuery(user model.User) (userData model.User, err error)
+
+	GetAllExclude(exclude string) (users []model.User, err error)
 }

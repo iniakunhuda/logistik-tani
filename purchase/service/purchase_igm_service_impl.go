@@ -174,6 +174,7 @@ func (t *PurchaseIgmServiceImpl) formattedResponse(value purchaseigmmodel.Purcha
 
 	// fetch purchaseIgm
 	purchaseIgmDetailDb, err := t.PurchaseIgmDetailRepository.GetAllByQuery(purchaseigmmodel.PurchaseIgmDetail{IDPurchaseIgm: int(value.ID)})
+
 	if err != nil {
 		purchaseIgmDetailDb = []purchaseigmmodel.PurchaseIgmDetail{}
 	}

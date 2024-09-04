@@ -221,3 +221,20 @@ func (t *UserServiceImpl) Profile(token string) (*response.UserResponse, error) 
 
 	return formatResponse, nil
 }
+
+func (t *UserServiceImpl) FindAllExclude(exclude string) ([]response.UserResponse, error) {
+	result, err := t.UserRepository.GetAllExclude(exclude)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []response.UserResponse
+	for _, value := range result {
+		user := response.UserResponse{
+			User: value,
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
