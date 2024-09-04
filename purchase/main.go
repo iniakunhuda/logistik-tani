@@ -55,7 +55,12 @@ func main() {
 	purchaseIgmService := service.NewPurchaseIgmServiceImpl(purchaseIgmRepository, purchaseIgmDetailRepository, validate)
 	purchaseIgmController := controller.NewPurchaseIgmController(purchaseIgmService)
 
-	routes := router.NewRouter(purchaseController, purchaseIgmController)
+	// purchase report to bank
+	purchaseReportToBankRepository := repository.NewPurchaseReportsToBankImpl(db)
+	purchaseReportToBankService := service.NewPurchaseReportToBankServiceImpl(purchaseReportToBankRepository, validate)
+	purchaseReportToBankController := controller.NewPurchaseReportsToBankController(purchaseReportToBankService)
+
+	routes := router.NewRouter(purchaseController, purchaseIgmController, purchaseReportToBankController)
 	srv := &http.Server{
 		Addr:         serverURI,
 		ErrorLog:     errLog,

@@ -78,3 +78,12 @@ func (t *UserRepositoryImpl) GetOneByQuery(user model.User) (userData model.User
 	}
 	return userData, nil
 }
+
+func (t *UserRepositoryImpl) GetAllExclude(exclude string) (users []model.User, err error) {
+	var userList []model.User
+	result := t.Db.Where("id != ?", exclude).Find(&userList)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return userList, nil
+}

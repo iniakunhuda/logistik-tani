@@ -68,7 +68,7 @@ func (t *PurchaseIgmDetailRepositoryImpl) Update(purchase purchaseigmmodel.Purch
 
 func (t *PurchaseIgmDetailRepositoryImpl) GetAllByQuery(purchase purchaseigmmodel.PurchaseIgmDetail) (purchases []purchaseigmmodel.PurchaseIgmDetail, err error) {
 	var purchaseList []purchaseigmmodel.PurchaseIgmDetail
-	result := t.Db.Preload("PurchaseDetail").Where(&purchase).Find(&purchaseList)
+	result := t.Db.Where(&purchase).Find(&purchaseList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -76,7 +76,7 @@ func (t *PurchaseIgmDetailRepositoryImpl) GetAllByQuery(purchase purchaseigmmode
 }
 
 func (t *PurchaseIgmDetailRepositoryImpl) GetOneByQuery(purchase purchaseigmmodel.PurchaseIgmDetail) (purchaseData purchaseigmmodel.PurchaseIgmDetail, err error) {
-	result := t.Db.Preload("PurchaseDetail").Where(&purchase).First(&purchaseData)
+	result := t.Db.Where(&purchase).First(&purchaseData)
 	if result.Error != nil {
 		return purchaseigmmodel.PurchaseIgmDetail{}, result.Error
 	}

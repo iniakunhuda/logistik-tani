@@ -12,6 +12,7 @@ type UserService interface {
 	FindById(userId int) (response.UserResponse, error)
 	FindAll() ([]response.UserResponse, error)
 	FindByRole(role string) ([]response.UserResponse, error)
+	FindAllExclude(exclude string) ([]response.UserResponse, error)
 
 	Login(email string, password string) (response.UserResponse, error)
 	Profile(token string) (*response.UserResponse, error)
