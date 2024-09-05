@@ -34,7 +34,7 @@ func (t *ProductOwnerRepositoryImpl) FindAll() (produks []model.ProductOwner, er
 
 func (t *ProductOwnerRepositoryImpl) FindById(produkId int) (*model.ProductOwner, error) {
 	var dataRow model.ProductOwner
-	result := t.Db.Find(&dataRow, produkId)
+	result := t.Db.Preload("Product").Find(&dataRow, produkId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -63,7 +63,7 @@ func (t *ProductOwnerRepositoryImpl) Update(produk model.ProductOwner) error {
 
 func (t *ProductOwnerRepositoryImpl) GetAllByQuery(produk model.ProductOwner) (produks []model.ProductOwner, err error) {
 	var dataList []model.ProductOwner
-	result := t.Db.Where(&produk).Find(&dataList)
+	result := t.Db.Where(&produk).Preload("Product").Find(&dataList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -71,7 +71,7 @@ func (t *ProductOwnerRepositoryImpl) GetAllByQuery(produk model.ProductOwner) (p
 }
 
 func (t *ProductOwnerRepositoryImpl) GetOneByQuery(produk model.ProductOwner) (produkData model.ProductOwner, err error) {
-	result := t.Db.Where(&produk).First(&produkData)
+	result := t.Db.Where(&produk).Preload("Product").First(&produkData)
 	if result.Error != nil {
 		return model.ProductOwner{}, result.Error
 	}
