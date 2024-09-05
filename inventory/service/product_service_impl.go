@@ -46,10 +46,10 @@ func (t *ProductServiceImpl) Create(request request.CreateProdukRequest) error {
 		}
 
 		// fetch again
-		productDb, err = t.ProductRepository.FindByName(request.Name)
-		if err != nil {
-			return err
-		}
+		productDb, _ = t.ProductRepository.FindByName(request.Name)
+		// if err != nil {
+		// 	return err
+		// }
 	}
 
 	// create product owner
