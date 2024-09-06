@@ -16,6 +16,7 @@ func NewRouter(userController *controller.UserController, authController *contro
 	r.HandleFunc("/api/users", userController.Create).Methods("POST")
 	r.HandleFunc("/api/users/{id}", userController.Update).Methods("PUT")
 	r.HandleFunc("/api/users/{id}", userController.Delete).Methods("DELETE")
+	r.HandleFunc("/api/users/{id}/add-saldo", userController.AddSaldoUser).Methods("POST")
 
 	landRouter := r.PathPrefix("/api/lands").Subrouter()
 	landRouter.HandleFunc("", userLandController.FindAll).Methods("GET")

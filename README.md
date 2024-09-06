@@ -22,8 +22,12 @@
 **igm**
 -   pembelian tebu dr petani (v)
 -   penjualan gula (v)
--   setor ke bank
+-   setor ke bank (v)
 
 **bank**
--   laporan2
+-   laporan singkat seperti yang di web
+
+![README/screenshot.png](README/screenshot.png)
+
 -   send uang
+-   laporan2 langsung di web aja tanpa api
