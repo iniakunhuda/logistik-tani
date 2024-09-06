@@ -1,7 +1,9 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -82,16 +84,23 @@ func (t *ProductServiceImpl) FindAll(produk *model.Product, userId ...string) ([
 
 	var produks []response.ProductResponse
 	for _, value := range productDb {
+
 		produk := response.ProductResponse{
-			ID:          value.ID,
-			IDUser:      uint(value.IDUser),
-			Name:        value.Product.Name,
-			Description: value.Product.Description,
-			PriceBuy:    uint(value.PriceBuy),
-			PriceSell:   uint(value.PriceSell),
-			Category:    value.Product.Category,
-			Stock:       uint(value.Stock),
+			ID:        value.ID,
+			IDUser:    uint(value.IDUser),
+			Name:      value.Product.Name,
+			PriceBuy:  uint(value.PriceBuy),
+			PriceSell: uint(value.PriceSell),
+			Category:  value.Product.Category,
+			Stock:     uint(value.Stock),
 		}
+
+		if value.Description != "" {
+			produk.Description = value.Description
+		} else {
+			produk.Description = value.Product.Description
+		}
+
 		produks = append(produks, produk)
 	}
 
@@ -110,38 +119,69 @@ func (t *ProductServiceImpl) FindById(produkOwnerId int, userId ...string) (resp
 
 	value := productDb[0]
 	formatResponse := response.ProductResponse{
-		ID:          value.ID,
-		IDUser:      uint(value.IDUser),
-		Name:        value.Product.Name,
-		Description: value.Product.Description,
-		PriceBuy:    uint(value.PriceBuy),
-		PriceSell:   uint(value.PriceSell),
-		Category:    value.Product.Category,
-		Stock:       uint(value.Stock),
+		ID:        value.ID,
+		IDUser:    uint(value.IDUser),
+		Name:      value.Product.Name,
+		PriceBuy:  uint(value.PriceBuy),
+		PriceSell: uint(value.PriceSell),
+		Category:  value.Product.Category,
+		Stock:     uint(value.Stock),
+	}
+
+	if value.Description != "" {
+		formatResponse.Description = value.Description
+	} else {
+		formatResponse.Description = value.Product.Description
 	}
 	return formatResponse, nil
 }
 
 func (t *ProductServiceImpl) Update(produkOwnerId int, produk request.UpdateProdukRequest) (response.ProductResponse, error) {
-	produkData, err := t.ProductOwnerRepository.FindById(produkOwnerId)
+	productOwnerDb, err := t.ProductOwnerRepository.FindById(produkOwnerId)
 	if err != nil {
 		return response.ProductResponse{}, err
 	}
+	jsonResponse, _ := json.Marshal(productOwnerDb)
+	fmt.Println(string(jsonResponse))
 
 	// update all field
+	if produk.Name != "" {
+		// check if product name exists, if exists fetch the product
+		productDb, _ := t.ProductRepository.FindByName(produk.Name)
+		if productDb == nil {
+			// create product if not exists
+			newProductDb := model.Product{
+				Name:        produk.Name,
+				Description: productOwnerDb.Product.Description,
+				PriceBuy:    int(productOwnerDb.PriceBuy),
+				PriceSell:   int(productOwnerDb.PriceSell),
+				Category:    productOwnerDb.Product.Category,
+			}
+			err = t.ProductRepository.Save(newProductDb)
+			if err != nil {
+				return response.ProductResponse{}, err
+			}
+
+			// fetch again
+			productDb, _ = t.ProductRepository.FindByName(produk.Name)
+		}
+		productOwnerDb.IDProduct = int(productDb.ID)
+
+	}
+
 	if produk.Description != "" {
-		produkData.Description = produk.Description
+		productOwnerDb.Description = produk.Description
 	}
 
 	if produk.PriceBuy != 0 {
-		produkData.PriceBuy = int(produk.PriceBuy)
+		productOwnerDb.PriceBuy = int(produk.PriceBuy)
 	}
 
 	if produk.PriceSell != 0 {
-		produkData.PriceSell = int(produk.PriceSell)
+		productOwnerDb.PriceSell = int(produk.PriceSell)
 	}
 
-	t.ProductOwnerRepository.Update(*produkData)
+	t.ProductOwnerRepository.Update(*productOwnerDb)
 
 	// find
 	productDb, err := t.ProductOwnerRepository.GetAllByProduk(model.Product{ID: uint(produkOwnerId)})
