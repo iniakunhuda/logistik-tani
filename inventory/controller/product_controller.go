@@ -80,7 +80,7 @@ func (controller *ProductController) FindById(w http.ResponseWriter, r *http.Req
 	}
 
 	if dataResp.IDUser != uint(userIdUint) {
-		util.FormatResponseError(w, http.StatusBadRequest, errors.New("Error! Produk tidak ditemukan"))
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("error! Produk tidak ditemukan"))
 		return
 	}
 
@@ -146,11 +146,40 @@ func (controller *ProductController) Update(w http.ResponseWriter, r *http.Reque
 
 	// check user id
 	if userIdUint != uint64(produkData.IDUser) {
-		util.FormatResponseError(w, http.StatusBadRequest, errors.New("Error! Produk tidak ditemukan"))
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("error! Produk tidak ditemukan"))
 		return
 	}
 
 	_, err = controller.productService.Update(productIdInt, userRequest)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, nil, nil)
+}
+
+func (controller *ProductController) Delete(w http.ResponseWriter, r *http.Request) {
+	userId := r.Header.Get("AuthUserID")
+	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
+
+	params := mux.Vars(r)
+	productId := params["id"]
+	productIdInt, _ := strconv.Atoi(productId)
+
+	produkData, err := controller.productService.FindById(productIdInt)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// check user id
+	if userIdUint != uint64(produkData.IDUser) {
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("error! Produk tidak ditemukan"))
+		return
+	}
+
+	err = controller.productService.Delete(productIdInt)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return

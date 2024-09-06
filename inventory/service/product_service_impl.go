@@ -69,7 +69,8 @@ func (t *ProductServiceImpl) Create(request request.CreateProdukRequest) error {
 	}
 
 	// add stock movement
-	t.storeStockMovement(int(productDb.ID), int(request.IDUser), request.Stock, "init")
+	productOwnerDb, _ := t.ProductOwnerRepository.GetOneByQuery(model.ProductOwner{IDProduct: int(productDb.ID), IDUser: int(request.IDUser)})
+	t.storeStockMovement(int(productOwnerDb.ID), int(request.IDUser), request.Stock, "init")
 
 	return nil
 }
@@ -207,6 +208,45 @@ func (t *ProductServiceImpl) Update(produkOwnerId int, produk request.UpdateProd
 	return formatResponse, nil
 }
 
+func (t *ProductServiceImpl) Delete(produkOwnerId int) error {
+	produkData, err := t.ProductOwnerRepository.FindById(produkOwnerId)
+	if err != nil {
+		return err
+	}
+
+	// cek sales if exists return error
+	_, err = t.StockTransactionRepository.GetOneByQuery(model.StockTransaction{IDProductOwner: produkOwnerId, Description: "sales"})
+	if err == nil {
+		return errors.New("error! Produk tidak bisa dihapus karena sudah ada transaksi penjualan/pembelian")
+	}
+
+	// cek purchase if exists return error
+	_, err = t.StockTransactionRepository.GetOneByQuery(model.StockTransaction{IDProductOwner: produkOwnerId, Description: "purchase"})
+	if err == nil {
+		return errors.New("error! Produk tidak bisa dihapus karena sudah ada transaksi penjualan/pembelian")
+	}
+
+	// cek panen if exists return error
+	_, err = t.StockTransactionRepository.GetOneByQuery(model.StockTransaction{IDProductOwner: produkOwnerId, Description: "panen"})
+	if err == nil {
+		return errors.New("error! Produk tidak bisa dihapus karena sudah ada transaksi penjualan/pembelian")
+	}
+
+	// delete stock movement
+	err = t.StockTransactionRepository.DeleteByQuery(model.StockTransaction{IDProductOwner: produkOwnerId})
+	if err != nil {
+		return errors.New("error! Produk tidak bisa dihapus. Error: " + err.Error())
+	}
+
+	// delete product owner
+	err = t.ProductOwnerRepository.Delete(int(produkData.ID))
+	if err != nil {
+		return errors.New("error! Produk tidak bisa dihapus. Error: " + err.Error())
+	}
+
+	return nil
+}
+
 func (t *ProductServiceImpl) UpdateReduceStock(productOwnerId int, stokTerbaru int, desc string) error {
 	produkData, err := t.ProductOwnerRepository.FindById(productOwnerId)
 	if err != nil {
@@ -214,7 +254,7 @@ func (t *ProductServiceImpl) UpdateReduceStock(productOwnerId int, stokTerbaru i
 	}
 
 	if stokTerbaru > int(produkData.Stock) {
-		return errors.New("Error! stok tidak mencukupi")
+		return errors.New("error! stok tidak mencukupi")
 	}
 
 	produkData.Stock = produkData.Stock - stokTerbaru
@@ -286,8 +326,11 @@ func (t *ProductServiceImpl) AutoCreateProductPetani(request request.CreateProdu
 		}
 	}
 
+	// fetch again
+	productOwnerDb, _ = t.ProductOwnerRepository.GetOneByQuery(model.ProductOwner{IDProduct: int(productDb.ID), IDUser: int(request.IDUser)})
+
 	// add stock movement
-	t.storeStockMovement(int(productDb.ID), int(request.IDUser), request.Stock, "purchase")
+	t.storeStockMovement(int(productOwnerDb.ID), int(request.IDUser), request.Stock, "purchase")
 
 	return nil
 }

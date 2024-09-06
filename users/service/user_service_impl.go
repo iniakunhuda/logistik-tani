@@ -238,3 +238,15 @@ func (t *UserServiceImpl) FindAllExclude(exclude string) ([]response.UserRespons
 
 	return users, nil
 }
+
+func (t *UserServiceImpl) AddSaldoUser(userId int, saldo int) error {
+	userData, err := t.UserRepository.FindById(userId)
+	if err != nil {
+		return err
+	}
+
+	userData.Saldo += uint(saldo)
+	t.UserRepository.Update(*userData)
+
+	return nil
+}

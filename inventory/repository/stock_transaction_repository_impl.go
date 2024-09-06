@@ -77,3 +77,11 @@ func (t *StockTransactionRepositoryImpl) GetOneByQuery(stock model.StockTransact
 	}
 	return stockData, nil
 }
+
+func (t *StockTransactionRepositoryImpl) DeleteByQuery(stock model.StockTransaction) error {
+	result := t.Db.Where(&stock).Delete(&stock)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}

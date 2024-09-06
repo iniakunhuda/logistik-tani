@@ -60,7 +60,7 @@ func (controller *ProductionController) FindById(w http.ResponseWriter, r *http.
 	}
 
 	if dataResp.IDUser != int(userIdUint) {
-		util.FormatResponseError(w, http.StatusBadRequest, errors.New("Error! Produk tidak ditemukan"))
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("error! Produk tidak ditemukan"))
 		return
 	}
 
@@ -126,7 +126,7 @@ func (controller *ProductionController) Update(w http.ResponseWriter, r *http.Re
 
 	// check user id
 	if userIdUint != uint64(produkData.IDUser) {
-		util.FormatResponseError(w, http.StatusBadRequest, errors.New("Error! Produk tidak ditemukan"))
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("error! Produk tidak ditemukan"))
 		return
 	}
 
@@ -166,4 +166,37 @@ func (controller *ProductionController) CreateRiwayat(w http.ResponseWriter, r *
 	}
 
 	util.FormatResponseSuccess(w, http.StatusCreated, nil, nil)
+}
+
+func (controller *ProductionController) FindAllWithoutAuth(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	filterIdUser := q.Get("id_user")
+
+	filter := model.Production{}
+
+	if filterIdUser != "" {
+		userID, _ := strconv.Atoi(filterIdUser)
+		filter.IDUser = userID
+	}
+
+	dataResp, err := controller.productionService.FindAll(&filter)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+}
+
+func (controller *ProductionController) FindByIdWithoutAuth(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	productId := params["id"]
+	productIdInt, _ := strconv.Atoi(productId)
+	dataResp, err := controller.productionService.FindById(productIdInt)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusNotFound, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
 }

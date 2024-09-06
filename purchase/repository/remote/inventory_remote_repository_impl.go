@@ -6,6 +6,7 @@ import (
 	"github.com/imroc/req/v3"
 	"github.com/iniakunhuda/logistik-tani/purchase/response"
 	inventoryresponse "github.com/iniakunhuda/logistik-tani/purchase/response/inventory_response"
+	panenresponse "github.com/iniakunhuda/logistik-tani/purchase/response/panen_response"
 	"github.com/iniakunhuda/logistik-tani/purchase/util"
 )
 
@@ -151,4 +152,46 @@ func (t InventoryRemoteRepositoryImpl) AutoCreateProdukPetani(produk response.Pr
 	}
 
 	return nil
+}
+
+func (t InventoryRemoteRepositoryImpl) GetPanenAll() ([]panenresponse.ProductionRowResponse, error) {
+	var res panenresponse.ProductionListResponse
+	resp, err := req.C().R().
+		SetHeader("Accept", "application/json").
+		SetBearerAuthToken("").
+		EnableDump().
+		SetSuccessResult(&res).
+		Get(t.baseUrl + "/panen/all")
+
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsErrorState() {
+		return nil, err
+	}
+
+	inventoryDetail := res.Data
+	return inventoryDetail, nil
+}
+
+func (t InventoryRemoteRepositoryImpl) GetPanenDetail(id string) (panenresponse.ProductionRowResponse, error) {
+	var res panenresponse.ProductionDetailResponse
+	resp, err := req.C().R().
+		SetHeader("Accept", "application/json").
+		SetBearerAuthToken("").
+		EnableDump().
+		SetSuccessResult(&res).
+		Get(t.baseUrl + "/panen/all/detail/" + id)
+
+	if err != nil {
+		return panenresponse.ProductionRowResponse{}, err
+	}
+
+	if resp.IsErrorState() {
+		return panenresponse.ProductionRowResponse{}, err
+	}
+
+	inventoryDetail := res.Data
+	return inventoryDetail, nil
 }

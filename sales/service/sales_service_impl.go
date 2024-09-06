@@ -85,8 +85,11 @@ func (t *SalesServiceImpl) Create(sales request.CreateSalesRequest) error {
 		if err != nil {
 			return err
 		}
+		if inventoryDetail.ID == 0 {
+			return fmt.Errorf("error! produk tidak ditemukan")
+		}
 		if inventoryDetail.Stock < uint(value.Qty) {
-			return fmt.Errorf("stok produk %s tidak mencukupi. Stok tersedia: %d", inventoryDetail.Name, inventoryDetail.Stock)
+			return fmt.Errorf("error! stok produk %s tidak mencukupi. Stok tersedia: %d", inventoryDetail.Name, inventoryDetail.Stock)
 		}
 	}
 

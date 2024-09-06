@@ -127,3 +127,26 @@ func (controller *UserController) Delete(w http.ResponseWriter, r *http.Request)
 
 	util.FormatResponseSuccess(w, http.StatusOK, nil, nil)
 }
+
+func (controller *UserController) AddSaldoUser(w http.ResponseWriter, r *http.Request) {
+	var userRequest request.AddSaldoUserRequest
+
+	err := json.NewDecoder(r.Body).Decode(&userRequest)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+	defer r.Body.Close()
+
+	params := mux.Vars(r)
+	userId := params["id"]
+	userIdInt, _ := strconv.Atoi(userId)
+
+	err = controller.userService.AddSaldoUser(userIdInt, userRequest.NewSaldo)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, nil, nil)
+}

@@ -11,6 +11,7 @@ import (
 	"github.com/iniakunhuda/logistik-tani/purchase/repository/remote"
 	"github.com/iniakunhuda/logistik-tani/purchase/request"
 	"github.com/iniakunhuda/logistik-tani/purchase/response"
+	panenresponse "github.com/iniakunhuda/logistik-tani/purchase/response/panen_response"
 	userresponse "github.com/iniakunhuda/logistik-tani/purchase/response/user_response"
 )
 
@@ -112,26 +113,6 @@ func (t *PurchaseIgmServiceImpl) FindAll(purchase *purchaseigmmodel.PurchaseIgm)
 		return nil, err
 	}
 
-	// get user service
-	users, err := t.UserRemoteRepository.GetAll()
-	if err != nil {
-		return nil, err
-	}
-	listUser := map[uint]response.UserResponse{}
-	for _, value := range users {
-		listUser[value.ID] = value
-	}
-
-	// get list of products
-	products, err := t.InventoryRemoteRepository.GetAll()
-	if err != nil {
-		return nil, err
-	}
-	listProducts := map[uint]response.ProductResponse{}
-	for _, value := range products {
-		listProducts[value.ID] = value
-	}
-
 	var purchases []response.PurchaseIgmResponse
 	for _, value := range result {
 		purchases = append(purchases, t.formattedResponse(value))
@@ -172,6 +153,16 @@ func (t *PurchaseIgmServiceImpl) formattedResponse(value purchaseigmmodel.Purcha
 		listUserLand[int(value.ID)] = value
 	}
 
+	// get production data
+	productions, err := t.InventoryRemoteRepository.GetPanenAll()
+	if err != nil {
+		return response.PurchaseIgmResponse{}
+	}
+	listProductions := map[int]panenresponse.ProductionRowResponse{}
+	for _, value := range productions {
+		listProductions[int(value.ID)] = value
+	}
+
 	// fetch purchaseIgm
 	purchaseIgmDetailDb, err := t.PurchaseIgmDetailRepository.GetAllByQuery(purchaseigmmodel.PurchaseIgmDetail{IDPurchaseIgm: int(value.ID)})
 
@@ -201,6 +192,9 @@ func (t *PurchaseIgmServiceImpl) formattedResponse(value purchaseigmmodel.Purcha
 				TotalPupuk:  land.TotalPupuk,
 				TotalBibit:  land.TotalBibit,
 				TotalTebu:   land.TotalTebu,
+			},
+			ProductionDetail: response.PurchaseIgmProductionDetailResponse{
+				ProductionRowResponse: listProductions[item.IDProduction],
 			},
 		})
 	}

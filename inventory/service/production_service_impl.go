@@ -198,7 +198,43 @@ func (t *ProductionServiceImpl) FindById(productionId int) (response.ProductionR
 	return formatResponse, nil
 }
 
+// ========================
+// Others
+// ========================
+
+func (t *ProductionServiceImpl) UpdateReduceStock(productOwnerId int, stokTerbaru int, desc string) error {
+	produkData, err := t.ProductOwnerRepository.FindById(productOwnerId)
+	if err != nil {
+		return err
+	}
+
+	if stokTerbaru > int(produkData.Stock) {
+		return errors.New("error! stok tidak mencukupi")
+	}
+
+	produkData.Stock = produkData.Stock - stokTerbaru
+	t.ProductOwnerRepository.Update(*produkData)
+
+	// add stock movement
+	t.storeStockMovement(productOwnerId, int(produkData.IDUser), stokTerbaru*-1, desc)
+
+	return nil
+}
+
+func (t *ProductionServiceImpl) storeStockMovement(idProductOwner int, idUser int, stock int, desc string) {
+	stockTransaction := model.StockTransaction{
+		IDProductOwner: idProductOwner,
+		IDUser:         idUser,
+		StockMovement:  stock,
+		Date:           time.Now(),
+		Description:    desc,
+	}
+	t.StockTransactionRepository.Save(stockTransaction)
+}
+
+// ========================
 // Riwayat Panen
+// ========================
 func (t *ProductionServiceImpl) CreateRiwayat(production request.CreateProductionDetailRequest) error {
 	productionDb, err := t.ProductionRepository.GetOneByQuery(model.Production{ID: uint(production.IDProduction)})
 	if err != nil {
@@ -228,34 +264,4 @@ func (t *ProductionServiceImpl) CreateRiwayat(production request.CreateProductio
 	}
 
 	return nil
-}
-
-func (t *ProductionServiceImpl) UpdateReduceStock(productOwnerId int, stokTerbaru int, desc string) error {
-	produkData, err := t.ProductOwnerRepository.FindById(productOwnerId)
-	if err != nil {
-		return err
-	}
-
-	if stokTerbaru > int(produkData.Stock) {
-		return errors.New("Error! stok tidak mencukupi")
-	}
-
-	produkData.Stock = produkData.Stock - stokTerbaru
-	t.ProductOwnerRepository.Update(*produkData)
-
-	// add stock movement
-	t.storeStockMovement(productOwnerId, int(produkData.IDUser), stokTerbaru*-1, desc)
-
-	return nil
-}
-
-func (t *ProductionServiceImpl) storeStockMovement(idProductOwner int, idUser int, stock int, desc string) {
-	stockTransaction := model.StockTransaction{
-		IDProductOwner: idProductOwner,
-		IDUser:         idUser,
-		StockMovement:  stock,
-		Date:           time.Now(),
-		Description:    desc,
-	}
-	t.StockTransactionRepository.Save(stockTransaction)
 }

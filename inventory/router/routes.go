@@ -20,9 +20,17 @@ func NewRouter(productController *controller.ProductController, productPetaniCon
 	inventory.HandleFunc("/{id}", productController.FindById).Methods("GET")
 	inventory.HandleFunc("", productController.Create).Methods("POST")
 	inventory.HandleFunc("/{id}", productController.Update).Methods("PUT")
+	inventory.HandleFunc("/{id}", productController.Delete).Methods("DELETE")
 
 	inventoryPetani := r.PathPrefix("/api/inventory/petani").Subrouter()
 	inventoryPetani.HandleFunc("", productPetaniController.Create).Methods("POST")
+
+	// ========================
+	// Panen Petani API
+	// ========================
+
+	r.HandleFunc("/api/panen/all", productionController.FindAllWithoutAuth).Methods("GET")
+	r.HandleFunc("/api/inventory/all/detail/{id}", productionController.FindByIdWithoutAuth).Methods("GET")
 
 	production := r.PathPrefix("/api/panen").Subrouter()
 	production.Use(util.AuthVerify)
