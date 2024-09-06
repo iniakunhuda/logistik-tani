@@ -198,37 +198,9 @@ func (t *ProductionServiceImpl) FindById(productionId int) (response.ProductionR
 	return formatResponse, nil
 }
 
-// Riwayat Panen
-func (t *ProductionServiceImpl) CreateRiwayat(production request.CreateProductionDetailRequest) error {
-	productionDb, err := t.ProductionRepository.GetOneByQuery(model.Production{ID: uint(production.IDProduction)})
-	if err != nil {
-		return err
-	}
-
-	if productionDb.ID == 0 {
-		return errors.New("Panen tidak ditemukan")
-	}
-
-	for _, product := range production.Products {
-		productionModel := model.ProductionDetail{
-			IDProduction:   production.IDProduction,
-			IDProductOwner: product.IDProduct,
-			QtyUse:         product.Qty,
-			Note:           product.Note,
-			Date:           production.Date,
-		}
-
-		// reduce stock & store stock movement
-		t.UpdateReduceStock(product.IDProduct, product.Qty, "panen")
-
-		err := t.ProductionDetailRepository.Save(productionModel)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
+// ========================
+// Others
+// ========================
 
 func (t *ProductionServiceImpl) UpdateReduceStock(productOwnerId int, stokTerbaru int, desc string) error {
 	produkData, err := t.ProductOwnerRepository.FindById(productOwnerId)
@@ -258,4 +230,38 @@ func (t *ProductionServiceImpl) storeStockMovement(idProductOwner int, idUser in
 		Description:    desc,
 	}
 	t.StockTransactionRepository.Save(stockTransaction)
+}
+
+// ========================
+// Riwayat Panen
+// ========================
+func (t *ProductionServiceImpl) CreateRiwayat(production request.CreateProductionDetailRequest) error {
+	productionDb, err := t.ProductionRepository.GetOneByQuery(model.Production{ID: uint(production.IDProduction)})
+	if err != nil {
+		return err
+	}
+
+	if productionDb.ID == 0 {
+		return errors.New("Panen tidak ditemukan")
+	}
+
+	for _, product := range production.Products {
+		productionModel := model.ProductionDetail{
+			IDProduction:   production.IDProduction,
+			IDProductOwner: product.IDProduct,
+			QtyUse:         product.Qty,
+			Note:           product.Note,
+			Date:           production.Date,
+		}
+
+		// reduce stock & store stock movement
+		t.UpdateReduceStock(product.IDProduct, product.Qty, "panen")
+
+		err := t.ProductionDetailRepository.Save(productionModel)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

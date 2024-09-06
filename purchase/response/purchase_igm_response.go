@@ -1,6 +1,10 @@
 package response
 
-import "time"
+import (
+	"time"
+
+	panenresponse "github.com/iniakunhuda/logistik-tani/purchase/response/panen_response"
+)
 
 type PurchaseIgmResponse struct {
 	ID           uint      `json:"id"`
@@ -16,18 +20,23 @@ type PurchaseIgmResponse struct {
 }
 
 type PurchaseIgmItemResponse struct {
-	IDUser         int                           `json:"id_user"`
-	IDUserLand     int                           `json:"id_user_land"`
-	IDProduction   int                           `json:"id_production"`
-	TotalKg        float64                       `json:"total_kg"`
-	HargaKg        float64                       `json:"harga_kg"`
-	Subtotal       float64                       `json:"subtotal"`
-	UserDetail     PurchaseIgmUserDetailResponse `json:"user_detail"`
-	UserLandDetail PurchaseIgmUserLandResponse   `json:"user_land_detail"`
+	IDUser           int                                 `json:"id_user"`
+	IDUserLand       int                                 `json:"id_user_land"`
+	IDProduction     int                                 `json:"id_production"`
+	TotalKg          float64                             `json:"total_kg"`
+	HargaKg          float64                             `json:"harga_kg"`
+	Subtotal         float64                             `json:"subtotal"`
+	UserDetail       PurchaseIgmUserDetailResponse       `json:"user_detail"`
+	UserLandDetail   PurchaseIgmUserLandResponse         `json:"user_land_detail"`
+	ProductionDetail PurchaseIgmProductionDetailResponse `json:"production_detail"`
 }
 
 type PurchaseIgmUserDetailResponse struct {
 	UserResponse
+}
+
+type PurchaseIgmProductionDetailResponse struct {
+	panenresponse.ProductionRowResponse
 }
 
 type PurchaseIgmUserLandResponse struct {

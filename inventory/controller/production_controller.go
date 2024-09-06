@@ -167,3 +167,36 @@ func (controller *ProductionController) CreateRiwayat(w http.ResponseWriter, r *
 
 	util.FormatResponseSuccess(w, http.StatusCreated, nil, nil)
 }
+
+func (controller *ProductionController) FindAllWithoutAuth(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	filterIdUser := q.Get("id_user")
+
+	filter := model.Production{}
+
+	if filterIdUser != "" {
+		userID, _ := strconv.Atoi(filterIdUser)
+		filter.IDUser = userID
+	}
+
+	dataResp, err := controller.productionService.FindAll(&filter)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+}
+
+func (controller *ProductionController) FindByIdWithoutAuth(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	productId := params["id"]
+	productIdInt, _ := strconv.Atoi(productId)
+	dataResp, err := controller.productionService.FindById(productIdInt)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusNotFound, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, dataResp, nil)
+}
