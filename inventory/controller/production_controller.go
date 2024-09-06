@@ -60,7 +60,7 @@ func (controller *ProductionController) FindById(w http.ResponseWriter, r *http.
 	}
 
 	if dataResp.IDUser != int(userIdUint) {
-		util.FormatResponseError(w, http.StatusBadRequest, errors.New("Error! Produk tidak ditemukan"))
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("error! Produk tidak ditemukan"))
 		return
 	}
 
@@ -126,7 +126,7 @@ func (controller *ProductionController) Update(w http.ResponseWriter, r *http.Re
 
 	// check user id
 	if userIdUint != uint64(produkData.IDUser) {
-		util.FormatResponseError(w, http.StatusBadRequest, errors.New("Error! Produk tidak ditemukan"))
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("error! Produk tidak ditemukan"))
 		return
 	}
 

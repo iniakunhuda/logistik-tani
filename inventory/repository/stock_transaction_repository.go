@@ -10,4 +10,5 @@ type StockTransactionRepository interface {
 	FindAll() (stocks []model.StockTransaction, err error)
 	GetAllByQuery(stock model.StockTransaction) (stocks []model.StockTransaction, err error)
 	GetOneByQuery(stock model.StockTransaction) (stockData model.StockTransaction, err error)
+	DeleteByQuery(stock model.StockTransaction) error
 }

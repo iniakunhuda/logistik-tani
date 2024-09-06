@@ -237,7 +237,7 @@ func (t *ProductionServiceImpl) UpdateReduceStock(productOwnerId int, stokTerbar
 	}
 
 	if stokTerbaru > int(produkData.Stock) {
-		return errors.New("Error! stok tidak mencukupi")
+		return errors.New("error! stok tidak mencukupi")
 	}
 
 	produkData.Stock = produkData.Stock - stokTerbaru

@@ -11,6 +11,7 @@ type ProductService interface {
 	FindById(produkOwnerId int, userId ...string) (response.ProductResponse, error)
 	FindAll(produk *model.Product, userId ...string) ([]response.ProductResponse, error)
 	Update(produkOwnerId int, produk request.UpdateProdukRequest) (response.ProductResponse, error)
+	Delete(produkOwnerId int) error
 
 	UpdateReduceStock(produkOwnerId int, stock int, desc string) error
 	UpdateIncreaseStock(produkOwnerId int, stock int, desc string) error
