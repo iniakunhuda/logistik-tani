@@ -94,6 +94,7 @@ func (t *PayoutHistoryServiceImpl) Update(purchaseId int, purchases request.Upda
 		return errors.New("error! transaksi sudah diapprove")
 	}
 
+	// Check if status available
 	statusArr := []string{"pending", "approved", "rejected"}
 	isValid := false
 	for _, value := range statusArr {
@@ -102,18 +103,16 @@ func (t *PayoutHistoryServiceImpl) Update(purchaseId int, purchases request.Upda
 			break
 		}
 	}
-
 	if !isValid {
 		return errors.New("error! status tidak valid (pending, approved, rejected)")
 	}
 
-	// time today
+	// Update purchase
 	today := time.Now()
-
 	filter := model.PayoutHistory{}
+
 	if purchases.Status == "approved" {
 		filter = model.PayoutHistory{
-			ID:              uint(purchaseId),
 			ApprovedDate:    &today,
 			ApprovedMessage: &purchases.Message,
 			Status:          purchases.Status,
@@ -128,11 +127,24 @@ func (t *PayoutHistoryServiceImpl) Update(purchaseId int, purchases request.Upda
 
 	if purchases.Status == "rejected" {
 		filter = model.PayoutHistory{
-			ID:              uint(purchaseId),
 			RejectedDate:    &today,
 			RejectedMessage: &purchases.Message,
 			Status:          purchases.Status,
 		}
+	}
+
+	filter.ID = uint(purchaseId)
+
+	if purchases.BankNote != nil {
+		filter.BankNote = *purchases.BankNote
+	}
+
+	if purchases.DatePayout != nil {
+		filter.DatePayout = purchases.DatePayout
+	}
+
+	if purchases.TotalAmount != nil {
+		filter.TotalAmount = *purchases.TotalAmount
 	}
 
 	// Update the purchase status
