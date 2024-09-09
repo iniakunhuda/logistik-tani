@@ -16,16 +16,18 @@ import (
 )
 
 type PayoutHistoryServiceImpl struct {
-	TokenAuth            string
-	PayoutRepository     repository.PayoutHistoryRepository
-	UserRemoteRepository remote.UserRemoteRepository
-	Validate             *validator.Validate
+	TokenAuth                             string
+	PayoutRepository                      repository.PayoutHistoryRepository
+	UserRemoteRepository                  remote.UserRemoteRepository
+	PurchaseReportsToBankRemoteRepository remote.PurchaseReportsToBankRepository
+	Validate                              *validator.Validate
 }
 
 func NewPayoutHistoryServiceImpl(purchasesRepository repository.PayoutHistoryRepository, validate *validator.Validate) PayoutHistoryService {
 	return &PayoutHistoryServiceImpl{
 		PayoutRepository:     purchasesRepository,
 		UserRemoteRepository: remote.NewUserRemoteRepositoryImpl(),
+		PurchaseReportsToBankRemoteRepository: remote.NewPurchaseReportsToBankRepositoryImpl(),
 		Validate:             validate,
 	}
 }
@@ -184,7 +186,7 @@ func (t *PayoutHistoryServiceImpl) FindById(purchaseId int) (response.PayoutHist
 		return response.PayoutHistoryResponse{}, err
 	}
 
-	formatResponse := t.formattedResponse(purchaseData)
+	formatResponse := t.formattedDetailResponse(purchaseData)
 	return formatResponse, nil
 }
 
@@ -200,6 +202,7 @@ func (t *PayoutHistoryServiceImpl) formattedResponse(value model.PayoutHistory) 
 	}
 
 	return response.PayoutHistoryResponse{
+		ID:                      int(value.ID),
 		IDSender:                value.IDSender,
 		IDReceiver:              value.IDReceiver,
 		NoInvoice:               value.NoInvoice,
@@ -216,5 +219,45 @@ func (t *PayoutHistoryServiceImpl) formattedResponse(value model.PayoutHistory) 
 
 		SenderDetail:   listUser[value.IDSender],
 		ReceiverDetail: listUser[value.IDReceiver],
+	}
+}
+
+func (t *PayoutHistoryServiceImpl) formattedDetailResponse(value model.PayoutHistory) response.PayoutHistoryResponse {
+	// get user service
+	users, err := t.UserRemoteRepository.GetAll()
+	if err != nil {
+		return response.PayoutHistoryResponse{}
+	}
+	listUser := map[int]response.UserResponse{}
+	for _, value := range users {
+		listUser[int(value.ID)] = value
+	}
+
+	// get purchase report service
+	detailPurchaseReport, err := t.PurchaseReportsToBankRemoteRepository.Find(strconv.Itoa(int(value.IDPurchaseReportsToBank)))
+	if err != nil {
+		return response.PayoutHistoryResponse{}
+	}
+
+	return response.PayoutHistoryResponse{
+		ID:                      int(value.ID),
+		IDSender:                value.IDSender,
+		IDReceiver:              value.IDReceiver,
+		NoInvoice:               value.NoInvoice,
+		TotalAmount:             value.TotalAmount,
+		BankNote:                value.BankNote,
+		DatePayout:              value.DatePayout,
+		IDPurchaseReportsToBank: value.IDPurchaseReportsToBank,
+		Status:                  value.Status,
+		CreatedDate:             value.CreatedDate,
+		ApprovedDate:            value.ApprovedDate,
+		ApprovedMessage:         value.ApprovedMessage,
+		RejectedDate:            value.RejectedDate,
+		RejectedMessage:         value.RejectedMessage,
+
+		SenderDetail:   listUser[value.IDSender],
+		ReceiverDetail: listUser[value.IDReceiver],
+
+		PurchaseReportsToBank: &detailPurchaseReport,
 	}
 }
