@@ -57,7 +57,7 @@ func main() {
 
 	// purchase report to bank
 	purchaseReportToBankRepository := repository.NewPurchaseReportsToBankImpl(db)
-	purchaseReportToBankService := service.NewPurchaseReportToBankServiceImpl(purchaseReportToBankRepository, validate)
+	purchaseReportToBankService := service.NewPurchaseReportToBankServiceImpl(purchaseReportToBankRepository, purchaseIgmService, validate)
 	purchaseReportToBankController := controller.NewPurchaseReportsToBankController(purchaseReportToBankService)
 
 	routes := router.NewRouter(purchaseController, purchaseIgmController, purchaseReportToBankController)

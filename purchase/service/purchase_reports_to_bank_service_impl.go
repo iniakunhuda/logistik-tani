@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -18,14 +19,16 @@ type PurchaseReportToBankServiceImpl struct {
 	PurchaseReportsToBankRepository repository.PurchaseReportsToBank
 	UserRemoteRepository            remote.UserRemoteRepository
 	InventoryRemoteRepository       remote.InventoryRemoteRepository
+	PurchaseIgmService              PurchaseIgmService
 	Validate                        *validator.Validate
 }
 
-func NewPurchaseReportToBankServiceImpl(purchaseReportToBank repository.PurchaseReportsToBank, validate *validator.Validate) PurchaseReportToBankService {
+func NewPurchaseReportToBankServiceImpl(purchaseReportToBank repository.PurchaseReportsToBank, purchaseIgmService PurchaseIgmService, validate *validator.Validate) PurchaseReportToBankService {
 	return &PurchaseReportToBankServiceImpl{
 		PurchaseReportsToBankRepository: purchaseReportToBank,
 		UserRemoteRepository:            remote.NewUserRemoteRepositoryImpl(),
 		InventoryRemoteRepository:       remote.NewInventoryRemoteRepositoryImpl(""), // TODO: set bearer token
+		PurchaseIgmService:              purchaseIgmService,
 		Validate:                        validate,
 	}
 }
@@ -139,7 +142,7 @@ func (t *PurchaseReportToBankServiceImpl) FindById(purchaseId int) (response.Pur
 	return formatResponse, nil
 }
 
-func (t *PurchaseReportToBankServiceImpl) formattedResponse(value purchaseigmmodel.PurchaseReportsToBank) response.PurchaseReportsToBankResponse {
+func (t *PurchaseReportToBankServiceImpl) formattedResponse(purchaseReport purchaseigmmodel.PurchaseReportsToBank) response.PurchaseReportsToBankResponse {
 	// get user service
 	users, err := t.UserRemoteRepository.GetAll()
 	if err != nil {
@@ -161,16 +164,33 @@ func (t *PurchaseReportToBankServiceImpl) formattedResponse(value purchaseigmmod
 	}
 
 	// get list of detail
-	
-	
+	purchasesIgm, err := t.PurchaseIgmService.FindAll(&purchaseigmmodel.PurchaseIgm{})
+	if err != nil {
+		return response.PurchaseReportsToBankResponse{}
+	}
+	listPurchasesIgm := map[int]response.PurchaseIgmResponse{}
+	for _, value := range purchasesIgm {
+		listPurchasesIgm[int(value.ID)] = value
+	}
+
+	// detail report to bank
+	detail := []response.PurchaseReportsToBankDetailResponse{}
+	for _, value := range purchaseReport.Details {
+		detail = append(detail, response.PurchaseReportsToBankDetailResponse{
+			PurchaseIgmResponse: listPurchasesIgm[int(value.IDPurchaseIgm)],
+		})
+	}
+
+	jcart, _ := json.Marshal(purchaseReport)
+	fmt.Println(string(jcart))
 
 	return response.PurchaseReportsToBankResponse{
-		ID:        value.ID,
-		Note:      value.Note,
-		Status:    value.Status,
-		NoReport:  value.NoReport,
-		DateStart: value.DateStart,
-		DateEnd:   value.DateEnd,
-		// Detail: ,
+		ID:        purchaseReport.ID,
+		Note:      purchaseReport.Note,
+		Status:    purchaseReport.Status,
+		NoReport:  purchaseReport.NoReport,
+		DateStart: purchaseReport.DateStart,
+		DateEnd:   purchaseReport.DateEnd,
+		Detail:    detail,
 	}
 }

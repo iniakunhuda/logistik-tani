@@ -1,8 +1,13 @@
 package response
 
-import "time"
+import (
+	"time"
+
+	purchasereportstobank "github.com/iniakunhuda/logistik-tani/finance/response/purchase_reports_to_bank"
+)
 
 type PayoutHistoryResponse struct {
+	ID                      int        `json:"id"`
 	IDSender                int        `json:"id_sender" validate:"required"`
 	IDReceiver              int        `json:"id_receiver" validate:"required"`
 	NoInvoice               string     `json:"no_invoice" validate:"required"`
@@ -19,4 +24,6 @@ type PayoutHistoryResponse struct {
 
 	SenderDetail   UserResponse `json:"sender_detail"`
 	ReceiverDetail UserResponse `json:"receiver_detail"`
+
+	PurchaseReportsToBank *purchasereportstobank.PurchaseReportsToBankResponse `json:"purchase_reports"`
 }

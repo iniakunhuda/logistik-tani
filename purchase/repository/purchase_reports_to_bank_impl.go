@@ -16,7 +16,7 @@ func NewPurchaseReportsToBankImpl(Db *gorm.DB) PurchaseReportsToBank {
 }
 
 func (t *PurchaseReportsToBankImpl) FindLastRow() (purchase *purchaseigmmodel.PurchaseReportsToBank, err error) {
-	result := t.Db.Order("id desc").First(&purchase)
+	result := t.Db.Preload("Details").Order("id desc").First(&purchase)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -34,7 +34,7 @@ func (t *PurchaseReportsToBankImpl) Delete(purchaseId int) error {
 
 func (t *PurchaseReportsToBankImpl) FindAll() (purchases []purchaseigmmodel.PurchaseReportsToBank, err error) {
 	var purchaseList []purchaseigmmodel.PurchaseReportsToBank
-	result := t.Db.Find(&purchaseList)
+	result := t.Db.Preload("Details").Find(&purchaseList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -43,7 +43,7 @@ func (t *PurchaseReportsToBankImpl) FindAll() (purchases []purchaseigmmodel.Purc
 
 func (t *PurchaseReportsToBankImpl) FindById(purchaseId int) (*purchaseigmmodel.PurchaseReportsToBank, error) {
 	var purchaseResult purchaseigmmodel.PurchaseReportsToBank
-	result := t.Db.Find(&purchaseResult, purchaseId)
+	result := t.Db.Preload("Details").Find(&purchaseResult, purchaseId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -92,7 +92,7 @@ func (t *PurchaseReportsToBankImpl) Update(purchase purchaseigmmodel.PurchaseRep
 
 func (t *PurchaseReportsToBankImpl) GetAllByQuery(purchase purchaseigmmodel.PurchaseReportsToBank) (purchases []purchaseigmmodel.PurchaseReportsToBank, err error) {
 	var purchaseList []purchaseigmmodel.PurchaseReportsToBank
-	result := t.Db.Where(&purchase).Find(&purchaseList)
+	result := t.Db.Preload("Details").Where(&purchase).Find(&purchaseList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -100,7 +100,7 @@ func (t *PurchaseReportsToBankImpl) GetAllByQuery(purchase purchaseigmmodel.Purc
 }
 
 func (t *PurchaseReportsToBankImpl) GetOneByQuery(purchase purchaseigmmodel.PurchaseReportsToBank) (purchaseData purchaseigmmodel.PurchaseReportsToBank, err error) {
-	result := t.Db.Where(&purchase).First(&purchaseData)
+	result := t.Db.Preload("Details").Where(&purchase).First(&purchaseData)
 	if result.Error != nil {
 		return purchaseigmmodel.PurchaseReportsToBank{}, result.Error
 	}
