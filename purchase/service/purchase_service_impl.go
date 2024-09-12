@@ -47,11 +47,11 @@ func (t *PurchaseServiceImpl) GenerateNoInvoice() (string, error) {
 
 	noInv := ""
 	if lastInv+1 < 10 {
-		noInv = fmt.Sprintf("SALES-000%d", lastInv+1)
+		noInv = fmt.Sprintf("PURCHASE-000%d", lastInv+1)
 	} else if lastInv+1 < 100 {
-		noInv = fmt.Sprintf("SALES-00%d", lastInv+1)
+		noInv = fmt.Sprintf("PURCHASE-00%d", lastInv+1)
 	} else if lastInv+1 < 1000 {
-		noInv = fmt.Sprintf("SALES-0%d", lastInv+1)
+		noInv = fmt.Sprintf("PURCHASE-0%d", lastInv+1)
 	}
 
 	return noInv, nil
