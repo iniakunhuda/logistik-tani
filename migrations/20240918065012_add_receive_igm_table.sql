@@ -6,6 +6,7 @@ CREATE TABLE crmtani_purchase.receive_igm (
     no_receive VARCHAR(50) NOT NULL,
     no_spta VARCHAR(50) NOT NULL,
     no_pol VARCHAR(20) NOT NULL,
+    date_in DATE NOT NULL,
     date_out DATE NOT NULL,
     weight_kotor DECIMAL(10, 2) NOT NULL,
     weight_tara DECIMAL(10, 2) NOT NULL,
