@@ -14,7 +14,8 @@ CREATE TABLE crmtani_purchase.receive_igm (
     weight_rafaksi DECIMAL(10, 2),
     total_kg DECIMAL(10, 2) NOT NULL,
     harga_kg DECIMAL(10, 2) NOT NULL,
-    subtotal DECIMAL(10, 2) NOT NULL
+    subtotal DECIMAL(10, 2) NOT NULL,
+    note TEXT NULL,
 );
 -- +goose StatementEnd
 
