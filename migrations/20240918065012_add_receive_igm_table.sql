@@ -16,6 +16,7 @@ CREATE TABLE crmtani_purchase.receive_igm (
     harga_kg DECIMAL(10, 2) NOT NULL,
     subtotal DECIMAL(10, 2) NOT NULL,
     note TEXT NULL,
+    status ENUM('open', 'close') NOT NULL
 );
 -- +goose StatementEnd
 
