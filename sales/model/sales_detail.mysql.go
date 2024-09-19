@@ -1,20 +1,15 @@
 package model
 
-import (
-	"time"
-)
-
 type SalesDetail struct {
-	ID         uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-	IDSales    uint   `gorm:"type:bigint;not null" json:"id_sales"`
-	IDProduk   uint   `gorm:"type:int;not null" json:"id_produk"`
-	Jenis      string `gorm:"type:enum('pupuk','bibit','obat');not null" json:"jenis" validate:"required"`
-	Harga      int    `gorm:"type:int;not null" json:"harga" validate:"required"`
-	Qty        int    `gorm:"type:int;not null" json:"qty" validate:"required"`
-	TotalHarga int    `gorm:"type:int;not null" json:"total_harga" validate:"required"`
-
-	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
+	ID             uint    `gorm:"primaryKey;autoIncrement" json:"id"`
+	IDSales        int     `gorm:"type:bigint;not null" json:"id_sales"`
+	IDProductOwner int     `gorm:"type:int;not null" json:"id_product"`
+	Price          float64 `gorm:"type:decimal(10,2);not null" json:"price" validate:"required"`
+	Qty            int     `gorm:"type:int;not null" json:"qty" validate:"required"`
+	Subtotal       float64 `gorm:"type:decimal(10,2);not null" json:"subtotal" validate:"required"`
+	Name           string  `gorm:"-" json:"name"`
+	Description    string  `gorm:"-" json:"description"`
+	Note           string  `gorm:"type:text" json:"note"`
 }
 
 func (SalesDetail) TableName() string {

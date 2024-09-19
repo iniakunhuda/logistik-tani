@@ -21,7 +21,28 @@ func NewInventoryRemoteRepositoryImpl(bearerToken string) InventoryRemoteReposit
 	}
 }
 
-func (t InventoryRemoteRepositoryImpl) GetDetail(id string) (response.ProdukResponse, error) {
+func (t InventoryRemoteRepositoryImpl) GetAll() ([]response.ProductResponse, error) {
+	var inventoryResponse inventoryresponse.InventoryListResponse
+	resp, err := req.C().R().
+		SetHeader("Accept", "application/json").
+		SetBearerAuthToken("").
+		EnableDump().
+		SetSuccessResult(&inventoryResponse).
+		Get(t.baseUrl + "/inventory/all")
+
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.IsErrorState() {
+		return nil, err
+	}
+
+	inventoryDetail := inventoryResponse.Data
+	return inventoryDetail, nil
+}
+
+func (t InventoryRemoteRepositoryImpl) GetDetail(id string) (response.ProductResponse, error) {
 	var inventoryResponse inventoryresponse.InventoryDetailResponse
 	resp, err := req.C().R().
 		SetHeader("Accept", "application/json").
@@ -31,11 +52,11 @@ func (t InventoryRemoteRepositoryImpl) GetDetail(id string) (response.ProdukResp
 		Get(t.baseUrl + "/inventory/all/detail/" + id)
 
 	if err != nil {
-		return response.ProdukResponse{}, err
+		return response.ProductResponse{}, err
 	}
 
 	if resp.IsErrorState() {
-		return response.ProdukResponse{}, err
+		return response.ProductResponse{}, err
 	}
 
 	inventoryDetail := inventoryResponse.Data
@@ -53,6 +74,7 @@ func (t InventoryRemoteRepositoryImpl) UpdateReduceStok(id string, stok string) 
 		SetBody(map[string]interface{}{
 			"id_produk":    id,
 			"stok_terbaru": stok,
+			"description":  "sales",
 		}).
 		SetSuccessResult(&response).
 		SetErrorResult(&response).
@@ -69,14 +91,42 @@ func (t InventoryRemoteRepositoryImpl) UpdateReduceStok(id string, stok string) 
 	return nil
 }
 
-func (t InventoryRemoteRepositoryImpl) PostCreatePetani(produk response.ProdukResponse, qty uint, idPembeli uint) error {
+func (t InventoryRemoteRepositoryImpl) UpdateIncreaseStok(id string, stok string) error {
+	var response inventoryresponse.InventoryDefaultResponse
+
+	url := t.baseUrl + "/inventory/all/update_increase_stock/" + id
+	resp, err := req.C().R().
+		SetHeader("Accept", "application/json").
+		SetBearerAuthToken("").
+		EnableDump().
+		SetBody(map[string]interface{}{
+			"id_produk":    id,
+			"stok_terbaru": stok,
+			"description":  "purchase",
+		}).
+		SetSuccessResult(&response).
+		SetErrorResult(&response).
+		Put(url)
+
+	if err != nil {
+		return err
+	}
+
+	if resp.IsErrorState() {
+		return errors.New(response.Message)
+	}
+
+	return nil
+}
+
+func (t InventoryRemoteRepositoryImpl) AutoCreateProdukPetani(produk response.ProductResponse, qty uint, idPembeli uint) error {
 	var response inventoryresponse.InventoryDefaultResponse
 
 	url := t.baseUrl + "/inventory/petani"
 
 	// remove produk.ID
 	produk.ID = 0
-	produk.StokAktif = qty
+	produk.Stock = qty
 	produk.IDUser = idPembeli
 
 	// jcart, _ := json.Marshal(produk)

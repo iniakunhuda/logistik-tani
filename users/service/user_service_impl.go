@@ -35,20 +35,12 @@ func (t *UserServiceImpl) Create(user request.CreateUserRequest) error {
 
 	userModel := model.User{
 		Name:         user.Name,
-		Username:     user.Email,
 		Email:        user.Email,
 		Password:     hashPassword,
-		Alamat:       user.Alamat,
+		Address:      user.Address,
 		Telp:         user.Telp,
 		Role:         user.Role,
 		Saldo:        user.Saldo,
-		LastLogin:    "",
-		AlamatKebun:  user.AlamatKebun,
-		TotalObat:    user.TotalObat,
-		TotalPupuk:   user.TotalPupuk,
-		TotalBibit:   user.TotalBibit,
-		TotalTebu:    user.TotalTebu,
-		LuasLahan:    user.LuasLahan,
 		Token:        nil,
 		TokenExpired: nil,
 	}
@@ -113,8 +105,8 @@ func (t *UserServiceImpl) Update(userId int, user request.UpdateUserRequest) err
 	if user.Email != "" {
 		userData.Email = user.Email
 	}
-	if user.Alamat != "" {
-		userData.Alamat = user.Alamat
+	if user.Address != "" {
+		userData.Address = user.Address
 	}
 	if user.Telp != "" {
 		userData.Telp = user.Telp
@@ -126,27 +118,9 @@ func (t *UserServiceImpl) Update(userId int, user request.UpdateUserRequest) err
 		userData.Saldo = user.Saldo
 	}
 
-	if user.LastLogin != "" {
-		userData.LastLogin = user.LastLogin
-	}
-	if user.AlamatKebun != "" {
-		userData.AlamatKebun = user.AlamatKebun
-	}
-	if user.TotalObat != 0 {
-		userData.TotalObat = user.TotalObat
-	}
-	if user.TotalPupuk != 0 {
-		userData.TotalPupuk = user.TotalPupuk
-	}
-	if user.TotalBibit != 0 {
-		userData.TotalBibit = user.TotalBibit
-	}
-	if user.TotalTebu != 0 {
-		userData.TotalTebu = user.TotalTebu
-	}
-	if user.LuasLahan != 0 {
-		userData.LuasLahan = user.LuasLahan
-	}
+	// if user.LastLogin != "" {
+	// 	userData.LastLogin = user.LastLogin
+	// }
 
 	if user.Token != nil {
 		userData.Token = user.Token
@@ -210,7 +184,7 @@ func (t *UserServiceImpl) Login(email string, password string) (response.UserRes
 	userData.TokenExpired = &tokenExpiredTime
 	userData.Token = &token
 
-	userData.LastLogin = util.GetTimeNow()
+	// userData.LastLogin = util.GetTimeNow()
 
 	err = t.UserRepository.Update(userData)
 	if err != nil {
@@ -246,4 +220,33 @@ func (t *UserServiceImpl) Profile(token string) (*response.UserResponse, error) 
 	}
 
 	return formatResponse, nil
+}
+
+func (t *UserServiceImpl) FindAllExclude(exclude string) ([]response.UserResponse, error) {
+	result, err := t.UserRepository.GetAllExclude(exclude)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []response.UserResponse
+	for _, value := range result {
+		user := response.UserResponse{
+			User: value,
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+func (t *UserServiceImpl) AddSaldoUser(userId int, saldo int) error {
+	userData, err := t.UserRepository.FindById(userId)
+	if err != nil {
+		return err
+	}
+
+	userData.Saldo += uint(saldo)
+	t.UserRepository.Update(*userData)
+
+	return nil
 }

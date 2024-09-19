@@ -43,16 +43,29 @@ func main() {
 	serverURI := fmt.Sprintf("%s:%d", *serverAddr, *serverPort)
 
 	// userRemoteRepository := remote.NewUserRemoteRepositoryImpl()
-
 	validate := validator.New()
-	produkRepository := repository.NewInventoryRepositoryImpl(db)
-	produkService := service.NewInventoryServiceImpl(produkRepository, validate)
-	produkController := controller.NewInventoryController(produkService)
+	produkRepository := repository.NewProductRepositoryImpl(db)
+	produkOwnerRepository := repository.NewProductOwnerRepositoryImpl(db)
+	stockTransactionRepository := repository.NewStockTransactionRepositoryImpl(db)
+	produkService := service.NewProductServiceImpl(produkRepository, produkOwnerRepository, stockTransactionRepository, validate)
+	produkController := controller.NewProductController(produkService)
 
-	produkPetaniService := service.NewInventoryPetaniServiceImpl(repository.NewInventoryPetaniRepositoryImpl(db), validate)
-	produkPetaniController := controller.NewInventoryPetaniController(produkPetaniService)
+	// petani
+	productPetaniController := controller.NewProductPetaniController(produkService)
 
-	routes := router.NewRouter(produkController, produkPetaniController)
+	// production
+	productionRepository := repository.NewProductionRepositoryImpl(db)
+	productionDetailRepository := repository.NewProductionDetailRepositoryImpl(db)
+	productionService := service.NewProductionServiceImpl(
+		productionRepository,
+		productionDetailRepository,
+		stockTransactionRepository,
+		produkOwnerRepository,
+		validate,
+	)
+	productionController := controller.NewProductionController(productionService)
+
+	routes := router.NewRouter(produkController, productPetaniController, productionController)
 	srv := &http.Server{
 		Addr:         serverURI,
 		ErrorLog:     errLog,

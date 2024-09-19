@@ -2,6 +2,8 @@ package util
 
 import (
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -27,4 +29,16 @@ func VerifyPassword(password, hash string) bool {
 
 func GetTimeNow() string {
 	return time.Now().Format("2006-01-02 15:04:05")
+}
+
+func FormatStringToInt(desc string) int {
+	formatInt, _ := strconv.Atoi(desc)
+	return formatInt
+}
+
+func GetEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
 }

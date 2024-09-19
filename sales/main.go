@@ -28,7 +28,7 @@ func main() {
 	serverAddr := flag.String("serverAddr", "", "HTTP server network address")
 	serverPort := flag.Int("serverPort", 4002, "HTTP server network port")
 	dsn := flag.String("dsn", getEnv("SALES_DSN", "root:@tcp(localhost:3306)/crmtani_sales?parseTime=true"), "MySQL data source name")
-    
+
 	flag.Parse()
 
 	// // Create logger for writing information and error messages.
@@ -44,11 +44,15 @@ func main() {
 	serverURI := fmt.Sprintf("%s:%d", *serverAddr, *serverPort)
 
 	validate := validator.New()
-	produkRepository := repository.NewSalesRepositoryImpl(db)
-	produkService := service.NewInventoryServiceImpl(produkRepository, validate)
-	produkController := controller.NewSalesController(produkService)
+	salesRepository := repository.NewSalesRepositoryImpl(db)
+	salesService := service.NewSalesServiceImpl(salesRepository, validate)
+	salesController := controller.NewSalesController(salesService)
 
-	routes := router.NewRouter(produkController)
+	salesIgmRepository := repository.NewSalesIgmRepositoryImpl(db)
+	salesIgmService := service.NewSalesIgmServiceImpl(salesIgmRepository, validate)
+	salesIgmController := controller.NewSalesIgmController(salesIgmService)
+
+	routes := router.NewRouter(salesController, salesIgmController)
 	srv := &http.Server{
 		Addr:         serverURI,
 		ErrorLog:     errLog,
@@ -66,10 +70,10 @@ func main() {
 // getEnv retrieves the value of the environment variable named by the key
 // If the variable is not present, it returns the default value.
 func getEnv(key, defaultValue string) string {
-    if value, exists := os.LookupEnv(key); exists {
-        return value
-    }
-    return defaultValue
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
 }
 
 func openDB(dsn string) (*gorm.DB, error) {

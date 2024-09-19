@@ -9,6 +9,7 @@ import (
 type SalesService interface {
 	Create(sale request.CreateSalesRequest) error
 	Delete(saleId int) error
-	FindById(saleId int, userId uint) (response.SalesResponse, error)
+	FindById(saleId int, userId int) (response.SalesResponse, error)
 	FindAll(sale *model.Sales) ([]response.SalesResponse, error)
+	Update(saleId int, userId int, sale request.UpdateSalesRequest) error
 }

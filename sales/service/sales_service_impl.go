@@ -14,7 +14,7 @@ import (
 	"github.com/iniakunhuda/logistik-tani/sales/response"
 )
 
-type InventoryServiceImpl struct {
+type SalesServiceImpl struct {
 	TokenAuth                 string
 	SalesRepository           repository.SalesRepository
 	UserRemoteRepository      remote.UserRemoteRepository
@@ -22,8 +22,8 @@ type InventoryServiceImpl struct {
 	Validate                  *validator.Validate
 }
 
-func NewInventoryServiceImpl(salesRepository repository.SalesRepository, validate *validator.Validate) SalesService {
-	return &InventoryServiceImpl{
+func NewSalesServiceImpl(salesRepository repository.SalesRepository, validate *validator.Validate) SalesService {
+	return &SalesServiceImpl{
 		SalesRepository:           salesRepository,
 		UserRemoteRepository:      remote.NewUserRemoteRepositoryImpl(),
 		InventoryRemoteRepository: remote.NewInventoryRemoteRepositoryImpl(""), // TODO: set bearer token
@@ -31,11 +31,8 @@ func NewInventoryServiceImpl(salesRepository repository.SalesRepository, validat
 	}
 }
 
-func (t *InventoryServiceImpl) GenerateNoInvoice() (string, error) {
+func (t *SalesServiceImpl) GenerateNoInvoice() (string, error) {
 	sales, err := t.SalesRepository.FindLastRow()
-	if err != nil {
-		return "", err
-	}
 
 	lastInv := 0
 	if sales != nil {
@@ -60,7 +57,7 @@ func (t *InventoryServiceImpl) GenerateNoInvoice() (string, error) {
 	return noInv, nil
 }
 
-func (t *InventoryServiceImpl) Create(sales request.CreateSalesRequest) error {
+func (t *SalesServiceImpl) Create(sales request.CreateSalesRequest) error {
 
 	noInv, err := t.GenerateNoInvoice()
 	if err != nil {
@@ -68,67 +65,69 @@ func (t *InventoryServiceImpl) Create(sales request.CreateSalesRequest) error {
 	}
 	totalHargaSales := 0
 	salesModel := model.Sales{
-		NoInvoice:        noInv,
-		IDPembeli:        sales.IDPembeli,
-		IDPenjual:        sales.IDPenjual,
-		Tanggal:          sales.Tanggal,
-		Status:           "open",
-		TotalHarga:       0,
-		IsPurchasedByIGM: false,
+		NoInvoice:  noInv,
+		IDBuyer:    int(sales.IDBuyer),
+		IDSeller:   int(sales.IDSeller),
+		SalesDate:  sales.SalesDate,
+		Status:     "open",
+		TotalPrice: 0,
 	}
 
-	pembeliDetail, err := t.UserRemoteRepository.Find(strconv.Itoa(int(sales.IDPembeli)))
+	pembeliDetail, err := t.UserRemoteRepository.Find(strconv.Itoa(int(sales.IDBuyer)))
 	if err != nil {
 		return err
 	}
 
 	// Check stok produk
-	for _, value := range sales.Produk {
+	for _, value := range sales.Products {
 		// Inventory Service: Check product stok
-		inventoryDetail, err := t.InventoryRemoteRepository.GetDetail(strconv.Itoa(int(value.IDProduk)))
+		inventoryDetail, err := t.InventoryRemoteRepository.GetDetail(strconv.Itoa(int(value.IDProduct)))
 		if err != nil {
 			return err
 		}
-		if inventoryDetail.StokAktif < value.Qty {
-			return fmt.Errorf("stok produk %s tidak mencukupi. Stok tersedia: %d", inventoryDetail.NamaProduk, inventoryDetail.StokAktif)
+		if inventoryDetail.ID == 0 {
+			return fmt.Errorf("error! produk tidak ditemukan")
+		}
+		if inventoryDetail.Stock < uint(value.Qty) {
+			return fmt.Errorf("error! stok produk %s tidak mencukupi. Stok tersedia: %d", inventoryDetail.Name, inventoryDetail.Stock)
 		}
 	}
 
 	salesDetailModel := []model.SalesDetail{}
-	for _, value := range sales.Produk {
+	for _, value := range sales.Products {
 
 		// Inventory Service: Check product stok
-		inventoryDetail, err := t.InventoryRemoteRepository.GetDetail(strconv.Itoa(int(value.IDProduk)))
+		inventoryDetail, err := t.InventoryRemoteRepository.GetDetail(strconv.Itoa(int(value.IDProduct)))
 		if err != nil {
 			return err
 		}
 
 		salesDetailModel = append(salesDetailModel, model.SalesDetail{
-			IDProduk:   value.IDProduk,
-			Jenis:      value.Jenis,
-			Harga:      int(value.Harga),
-			Qty:        int(value.Qty),
-			TotalHarga: int(value.Harga) * int(value.Qty),
+			IDProductOwner: int(inventoryDetail.ID),
+			Price:          float64(value.Price),
+			Qty:            int(value.Qty),
+			Subtotal:       float64(value.Price) * float64(value.Qty),
+			Note:           value.Catatan,
 		})
 
 		// Inventory Service: Trigger stok update
-		err = t.InventoryRemoteRepository.UpdateReduceStok(strconv.Itoa(int(value.IDProduk)), strconv.Itoa(int(value.Qty)))
+		err = t.InventoryRemoteRepository.UpdateReduceStok(strconv.Itoa(int(value.IDProduct)), strconv.Itoa(int(value.Qty)))
 		if err != nil {
 			return err
 		}
 
 		// Inventory Service: If pembeli is petani, then create inventory_petani
 		if pembeliDetail.Role == "petani" {
-			err = t.InventoryRemoteRepository.PostCreatePetani(inventoryDetail, value.Qty, sales.IDPembeli)
+			err = t.InventoryRemoteRepository.AutoCreateProdukPetani(inventoryDetail, uint(value.Qty), uint(sales.IDBuyer))
 			if err != nil {
-				return errors.New("postCreatePetani: " + err.Error())
+				return errors.New("AutoCreateProdukPetani: " + err.Error())
 			}
 		}
 
-		totalHargaSales += int(value.Harga) * int(value.Qty)
+		totalHargaSales += int(value.Price) * int(value.Qty)
 	}
 
-	salesModel.TotalHarga = totalHargaSales
+	salesModel.TotalPrice = float64(totalHargaSales)
 	err = t.SalesRepository.Save(salesModel, salesDetailModel)
 	if err != nil {
 		return err
@@ -137,9 +136,9 @@ func (t *InventoryServiceImpl) Create(sales request.CreateSalesRequest) error {
 	return nil
 }
 
-func (t *InventoryServiceImpl) Update(saleId int, userId int, sales request.UpdateSalesRequest) error {
+func (t *SalesServiceImpl) Update(saleId int, userId int, sales request.UpdateSalesRequest) error {
 	// Validate the request
-	salesData, err := t.SalesRepository.GetOneByQuery(model.Sales{IDPenjual: uint(userId), ID: uint(saleId)})
+	salesData, err := t.SalesRepository.GetOneByQuery(model.Sales{IDSeller: userId, ID: uint(saleId)})
 	if err != nil {
 		return err
 	}
@@ -170,7 +169,7 @@ func (t *InventoryServiceImpl) Update(saleId int, userId int, sales request.Upda
 	return nil
 }
 
-func (t *InventoryServiceImpl) Delete(salesId int) error {
+func (t *SalesServiceImpl) Delete(salesId int) error {
 	err := t.SalesRepository.Delete(salesId)
 	if err != nil {
 		return err
@@ -178,7 +177,7 @@ func (t *InventoryServiceImpl) Delete(salesId int) error {
 	return nil
 }
 
-func (t *InventoryServiceImpl) FindAll(sale *model.Sales) ([]response.SalesResponse, error) {
+func (t *SalesServiceImpl) FindAll(sale *model.Sales) ([]response.SalesResponse, error) {
 	result, err := t.SalesRepository.GetAllByQuery(*sale)
 
 	if err != nil {
@@ -195,12 +194,32 @@ func (t *InventoryServiceImpl) FindAll(sale *model.Sales) ([]response.SalesRespo
 		listUser[value.ID] = value
 	}
 
+	// get list of products
+	products, err := t.InventoryRemoteRepository.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	listProducts := map[uint]response.ProductResponse{}
+	for _, value := range products {
+		listProducts[value.ID] = value
+	}
+
 	var sales []response.SalesResponse
 	for _, value := range result {
+
+		// get product detail
+		var salesDetail = value.SalesDetail
+		for i, salesDetailItem := range salesDetail {
+			productDetail := listProducts[uint(salesDetailItem.IDProductOwner)]
+			salesDetail[i].Name = productDetail.Name
+			salesDetail[i].Description = productDetail.Description
+		}
+		value.SalesDetail = salesDetail
+
 		newSalesDetail := response.SalesResponse{
-			Sales:         value,
-			PenjualDetail: listUser[value.IDPenjual],
-			PembeliDetail: listUser[value.IDPembeli],
+			Sales:        value,
+			SellerDetail: listUser[uint(value.IDSeller)],
+			BuyerDetail:  listUser[uint(value.IDBuyer)],
 		}
 		sales = append(sales, newSalesDetail)
 	}
@@ -208,8 +227,8 @@ func (t *InventoryServiceImpl) FindAll(sale *model.Sales) ([]response.SalesRespo
 	return sales, nil
 }
 
-func (t *InventoryServiceImpl) FindById(salesId int, userId uint) (response.SalesResponse, error) {
-	salesData, err := t.SalesRepository.GetOneByQuery(model.Sales{IDPenjual: userId, ID: uint(salesId)})
+func (t *SalesServiceImpl) FindById(salesId int, userId int) (response.SalesResponse, error) {
+	salesData, err := t.SalesRepository.GetOneByQuery(model.Sales{IDSeller: userId, ID: uint(salesId)})
 	if err != nil {
 		return response.SalesResponse{}, err
 	}
@@ -224,10 +243,29 @@ func (t *InventoryServiceImpl) FindById(salesId int, userId uint) (response.Sale
 		listUser[value.ID] = value
 	}
 
+	// get list of products
+	products, err := t.InventoryRemoteRepository.GetAll()
+	if err != nil {
+		return response.SalesResponse{}, err
+	}
+	listProducts := map[uint]response.ProductResponse{}
+	for _, value := range products {
+		listProducts[value.ID] = value
+	}
+
+	// get product detail
+	var salesDetail = salesData.SalesDetail
+	for i, salesDetailItem := range salesDetail {
+		productDetail := listProducts[uint(salesDetailItem.IDProductOwner)]
+		salesDetail[i].Name = productDetail.Name
+		salesDetail[i].Description = productDetail.Description
+	}
+	salesData.SalesDetail = salesDetail
+
 	formatResponse := response.SalesResponse{
-		Sales:         salesData,
-		PenjualDetail: listUser[salesData.IDPenjual],
-		PembeliDetail: listUser[salesData.IDPembeli],
+		Sales:        salesData,
+		SellerDetail: listUser[uint(salesData.IDSeller)],
+		BuyerDetail:  listUser[uint(salesData.IDBuyer)],
 	}
 	return formatResponse, nil
 }

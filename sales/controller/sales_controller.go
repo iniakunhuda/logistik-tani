@@ -26,9 +26,10 @@ func NewSalesController(service service.SalesService) *SalesController {
 
 func (controller *SalesController) FindAll(w http.ResponseWriter, r *http.Request) {
 	userId := r.Header.Get("AuthUserID")
-	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
+	userIdInt, _ := strconv.Atoi(userId)
+	// userIdUint, _ := strconv.ParseUint(userId, 10, 64)
 
-	dataResp, err := controller.salesService.FindAll(&model.Sales{IDPenjual: uint(userIdUint)})
+	dataResp, err := controller.salesService.FindAll(&model.Sales{IDSeller: userIdInt})
 	if err != nil {
 		util.FormatResponseError(w, http.StatusInternalServerError, err)
 		return
@@ -39,12 +40,12 @@ func (controller *SalesController) FindAll(w http.ResponseWriter, r *http.Reques
 
 func (controller *SalesController) FindById(w http.ResponseWriter, r *http.Request) {
 	userId := r.Header.Get("AuthUserID")
-	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
+	userIdInt, _ := strconv.Atoi(userId)
 
 	params := mux.Vars(r)
 	salesId := params["id"]
 	salesIdInt, _ := strconv.Atoi(salesId)
-	dataResp, err := controller.salesService.FindById(salesIdInt, uint(userIdUint))
+	dataResp, err := controller.salesService.FindById(salesIdInt, userIdInt)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusNotFound, err)
 		return
@@ -54,7 +55,7 @@ func (controller *SalesController) FindById(w http.ResponseWriter, r *http.Reque
 
 func (controller *SalesController) Create(w http.ResponseWriter, r *http.Request) {
 	userId := r.Header.Get("AuthUserID")
-	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
+	userIdInt, _ := strconv.Atoi(userId)
 
 	var userRequest request.CreateSalesRequest
 	err := json.NewDecoder(r.Body).Decode(&userRequest)
@@ -64,8 +65,8 @@ func (controller *SalesController) Create(w http.ResponseWriter, r *http.Request
 	}
 	defer r.Body.Close()
 
-	if userRequest.IDPenjual != uint(userIdUint) {
-		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User not match"))
+	if userRequest.IDSeller != userIdInt {
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User tidak sama"))
 		return
 	}
 
@@ -87,26 +88,63 @@ func (controller *SalesController) Create(w http.ResponseWriter, r *http.Request
 }
 
 func (controller *SalesController) Update(w http.ResponseWriter, r *http.Request) {
-	// TODO: only can update status based user login
-	util.FormatResponseSuccess(w, http.StatusOK, nil, nil)
-}
-
-func (controller *SalesController) Delete(w http.ResponseWriter, r *http.Request) {
 	userId := r.Header.Get("AuthUserID")
-	userIdUint, _ := strconv.ParseUint(userId, 10, 64)
+	userIdInt, _ := strconv.Atoi(userId)
 
 	params := mux.Vars(r)
 	salesId := params["id"]
 	salesIdInt, _ := strconv.Atoi(salesId)
 
-	dataResp, err := controller.salesService.FindById(salesIdInt, uint(userIdUint))
+	var userRequest request.UpdateSalesRequest
+	err := json.NewDecoder(r.Body).Decode(&userRequest)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+	defer r.Body.Close()
+
+	_, err = controller.salesService.FindById(salesIdInt, userIdInt)
 	if err != nil {
 		util.FormatResponseError(w, http.StatusNotFound, err)
 		return
 	}
 
-	if dataResp.IDPenjual != uint(userIdUint) {
-		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User not match"))
+	validate := validator.New()
+	err = validate.Struct(userRequest)
+	if err != nil {
+		errors := err.(validator.ValidationErrors)
+		util.FormatResponseError(w, http.StatusBadRequest, errors)
+		return
+	}
+
+	err = controller.salesService.Update(salesIdInt, userIdInt, userRequest)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	util.FormatResponseSuccess(w, http.StatusOK, nil, nil)
+}
+
+func (controller *SalesController) Delete(w http.ResponseWriter, r *http.Request) {
+	util.FormatResponseError(w, http.StatusNotFound, errors.New("Penjualan tidak dapat dihapus"))
+	return
+
+	userId := r.Header.Get("AuthUserID")
+	userIdInt, _ := strconv.Atoi(userId)
+
+	params := mux.Vars(r)
+	salesId := params["id"]
+	salesIdInt, _ := strconv.Atoi(salesId)
+
+	dataResp, err := controller.salesService.FindById(salesIdInt, userIdInt)
+	if err != nil {
+		util.FormatResponseError(w, http.StatusNotFound, err)
+		return
+	}
+
+	if dataResp.IDSeller != userIdInt {
+		util.FormatResponseError(w, http.StatusBadRequest, errors.New("ID User tidak sama"))
 		return
 	}
 
